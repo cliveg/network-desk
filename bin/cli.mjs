@@ -18,7 +18,7 @@ const SPECIALIST_NAMES = [
     "vnet-architect", "firewall-engineer", "load-balancer",
     "dns-specialist", "private-link", "hybrid-connectivity",
     "network-security", "network-troubleshooter", "vwan-sdwan",
-    "network-monitor", "multi-cloud-net",
+    "network-monitor", "multi-cloud-net", "pricing-analyst",
 ];
 
 const CYAN = "\x1b[36m";

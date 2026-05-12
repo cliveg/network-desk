@@ -1,10 +1,11 @@
 // Extension: cloud-networking (standalone)
-// Self-contained cloud networking agent that bundles all 11 specialist
+// Self-contained cloud networking agent that bundles all 12 specialist
 // roles and skills. No external extension dependencies required.
 //
 // Specialists: vnet-architect, firewall-engineer, load-balancer,
 // dns-specialist, private-link, hybrid-connectivity, network-security,
-// network-troubleshooter, vwan-sdwan, network-monitor, multi-cloud-net
+// network-troubleshooter, vwan-sdwan, network-monitor, multi-cloud-net,
+// pricing-analyst
 
 import { joinSession } from "@github/copilot-sdk/extension";
 import { readFile } from "node:fs/promises";
@@ -92,6 +93,10 @@ Covers flow logs, traffic analytics, connection monitors, and alerting across al
     mcn: `You are now operating as the **multi-cloud-net** agent.
 Call \`mcn_role\` first, then use: mcn_skill_transit_design, mcn_skill_addressing_plan, mcn_skill_service_mapping, mcn_skill_latency_optimization, mcn_skill_cost_comparison.
 Covers cross-cloud connectivity architectures, service equivalency mapping, and cost analysis.`,
+
+    price: `You are now operating as the **pricing-analyst** agent.
+Call \`price_role\` first, then use: price_skill_egress_calc, price_skill_vpn_pricing, price_skill_circuit_pricing, price_skill_lb_pricing, price_skill_firewall_pricing, price_skill_cost_optimizer, price_skill_price_compare.
+Covers Azure, AWS, and GCP networking costs. Prices are indicative — always verify against current vendor pricing pages.`,
 };
 
 // ── Routing table ──────────────────────────────────────────────────────
@@ -108,6 +113,7 @@ const ROUTES = [
     { domain: "Virtual WAN / SD-WAN", prefix: "vwan", trigger: /\b(Virtual\s+WAN|vWAN|VWAN|routing\s+intent|secured\s+hub|SD[-\s]?WAN|inter[-\s]?hub|vWAN\s+hub)/i },
     { domain: "Network Monitoring", prefix: "nmon", trigger: /\b(network\s+monitor|Connection\s+Monitor|traffic\s+analytics|flow\s+log|network\s+(alert|dashboard|baseline|observ)|NSG\s+flow|VPC\s+flow|network\s+metric)/i },
     { domain: "Multi-Cloud Networking", prefix: "mcn", trigger: /\b(multi[-\s]?cloud\s+(network|connect|transit)|cross[-\s]?cloud|cloud[-\s]?to[-\s]?cloud|transit\s+(architecture|design)|cloud\s+interconnect\s+design|service\s+mapping\s+(across|between)\s+cloud)/i },
+    { domain: "Network Pricing", prefix: "price", trigger: /\b(pric(e|ing)|cost\s+(estimat|compar|analy|optim|break)|egress\s+cost|data\s+transfer\s+cost|TCO|total\s+cost|network\s+cost|billing|budget|monthly\s+cost|how\s+much\s+(does|will|is)|cheaper|expensive|save\s+money|cost\s+saving|right[-\s]?siz)/i },
 ];
 
 // ── Build capabilities summary ─────────────────────────────────────────
@@ -128,6 +134,7 @@ function buildCapabilitiesSummary() {
 | 9 | Virtual WAN / SD-WAN | vwan_ | vwan_role | vwan_orchestrate |
 | 10 | Network Monitoring | nmon_ | nmon_role | nmon_orchestrate |
 | 11 | Multi-Cloud Networking | mcn_ | mcn_role | mcn_orchestrate |
+| 12 | Network Pricing | price_ | price_role | price_orchestrate |
 
 ## Firewall Vendor Coverage
 Azure Firewall, AWS Network Firewall, GCP Cloud Firewall/Cloud Armor, Palo Alto (PAN-OS/Panorama/VM-Series/Prisma), Fortinet FortiGate (FortiOS/FortiManager), Check Point (R81+/SmartConsole/CloudGuard), Cisco ASA/FTD, Juniper SRX/vSRX, Zscaler (ZIA/ZPA), Sophos XG/XGS, OPNsense, pfSense, VyOS, iptables/nftables
@@ -161,7 +168,7 @@ const tools = [
     // ── Discovery tools ──
     {
         name: "cn_capabilities",
-        description: "Returns a structured map of all 11 cloud networking specialist extensions, their role tools, and available skills. Use when you need to discover what networking capabilities are available.",
+        description: "Returns a structured map of all 12 cloud networking specialist extensions, their role tools, and available skills. Use when you need to discover what networking capabilities are available.",
         parameters: { type: "object", properties: {} },
         skipPermission: true,
         handler: async () => buildCapabilitiesSummary(),
@@ -393,6 +400,28 @@ const tools = [
         skillLoader("multi-cloud-net", "latency-optimization")),
     skillTool("mcn_skill_cost_comparison", "Skill: Network cost comparison across clouds — egress, peering, VPN, interconnect pricing.",
         skillLoader("multi-cloud-net", "cost-comparison")),
+
+    // ── 12. Pricing Analyst ──
+    roleTool("price_role",
+        "Load the pricing-analyst agent role for network cost estimation and optimization across Azure, AWS, and GCP. Call this first for any pricing or cost question.",
+        roleLoader("pricing-analyst")),
+    orchestratorTool("price_orchestrate",
+        "Return the orchestration prompt for the Pricing Analyst agent. Use for cost estimation, pricing comparison, egress calculation, cost optimization.",
+        ORCHESTRATORS.price),
+    skillTool("price_skill_egress_calc", "Skill: Data transfer and egress cost calculation across Azure, AWS, and GCP — tiered pricing, inter-region, peering costs.",
+        skillLoader("pricing-analyst", "egress-calc")),
+    skillTool("price_skill_vpn_pricing", "Skill: VPN gateway pricing comparison — per-hour costs, tunnel limits, data transfer charges across all three clouds.",
+        skillLoader("pricing-analyst", "vpn-pricing")),
+    skillTool("price_skill_circuit_pricing", "Skill: Dedicated circuit pricing — ExpressRoute, Direct Connect, Cloud Interconnect fees, break-even analysis vs VPN.",
+        skillLoader("pricing-analyst", "circuit-pricing")),
+    skillTool("price_skill_lb_pricing", "Skill: Load balancer pricing — Azure LB/AppGW/Front Door, AWS ALB/NLB/GLB, GCP LB cost structures.",
+        skillLoader("pricing-analyst", "lb-pricing")),
+    skillTool("price_skill_firewall_pricing", "Skill: Firewall pricing — Azure Firewall tiers, AWS Network Firewall, GCP Cloud Armor, NVA marketplace costs.",
+        skillLoader("pricing-analyst", "firewall-pricing")),
+    skillTool("price_skill_cost_optimizer", "Skill: Network cost optimization — reduce egress, right-size gateways, reserved capacity, architectural patterns to save.",
+        skillLoader("pricing-analyst", "cost-optimizer")),
+    skillTool("price_skill_price_compare", "Skill: Cross-cloud network pricing comparison — side-by-side tables for equivalent services, workload scenario costs.",
+        skillLoader("pricing-analyst", "price-compare")),
 ];
 
 // ── Register session ───────────────────────────────────────────────────
@@ -420,5 +449,5 @@ const session = await joinSession({
 });
 
 await session.log(
-    "cloud-networking loaded — 11 specialists, 89 tools, fully standalone (cn_capabilities, cn_route)",
+    "cloud-networking loaded — 12 specialists, 99 tools, fully standalone (cn_capabilities, cn_route)",
 );

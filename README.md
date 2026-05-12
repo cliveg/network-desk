@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
 
-**Your cloud networking AI team for GitHub Copilot CLI.** 11 specialist agents covering VNet design, firewalls (14 vendors), load balancing, DNS, private connectivity, and more — routed automatically.
+**Your cloud networking AI team for GitHub Copilot CLI.** 12 specialist agents covering VNet design, firewalls (14 vendors), load balancing, DNS, private connectivity, and more — routed automatically.
 
 ---
 
@@ -13,7 +13,7 @@
 |---|---------|-------------|
 | 🚀 | [Quick Start](#quick-start) | One-command install |
 | 💡 | [What is Cloud Networking?](#what-is-cloud-networking) | Overview and key concepts |
-| 👥 | [The Team](#the-team) | All 11 specialists at a glance |
+| 👥 | [The Team](#the-team) | All 12 specialists at a glance |
 | 📦 | [Installation](#installation) | 5 ways to install (npx user-level, npx project-level, npm, Copilot prompt, manual) |
 | 🖥️ | [CLI Reference](#cli-reference) | `init`, `status`, `uninstall`, `--version` |
 | ⚙️ | [How It Works](#how-it-works) | Architecture, routing, and workflow |
@@ -55,6 +55,7 @@ Each specialist runs with its own domain expertise, guardrails, and workflow. Th
 | **Virtual WAN / SD-WAN** | `vwan_` | vWAN design, routing intent, NVA integration, branch connectivity |
 | **Network Monitor** | `nmon_` | Flow logs, traffic analytics, connection monitors, dashboards, alerts |
 | **Multi-Cloud Networking** | `mcn_` | Cross-cloud transit, addressing, service mapping, cost comparison |
+| **Pricing Analyst** | `price_` | Network cost estimation, egress calculation, pricing comparison, cost optimization |
 
 ### Firewall Vendors (14)
 
@@ -84,7 +85,7 @@ copilot --experimental
 
 This will:
 1. Create `~/.copilot/extensions/cloud-networking/` if it doesn't exist
-2. Copy the extension router and all 11 specialists
+2. Copy the extension router and all 12 specialists
 3. Remove any conflicting individual specialist extensions
 4. Display a summary of what was installed
 
@@ -108,7 +109,7 @@ copilot
 
 This will:
 1. Create `.github/extensions/cloud-networking/` in the current repo
-2. Copy the extension router and all 11 specialists
+2. Copy the extension router and all 12 specialists
 3. Add the extension directory to `.gitignore` (each developer runs init themselves)
 
 ### Option C — Global install via npm
@@ -202,7 +203,7 @@ copilot
 > show me the cloud-networking capabilities
 ```
 
-You should see all 11 specialists listed with their tools.
+You should see all 12 specialists listed with their tools.
 
 ### Updating
 
@@ -248,7 +249,7 @@ Cloud Networking Extension (~/.copilot/extensions/cloud-networking/extension.mjs
     ├─ Auto-routing hook detects networking keywords
     │   └─ Injects routing context → "use fw_* tools for firewall config"
     │
-    ├─ cn_capabilities → full map of all 11 specialists
+    ├─ cn_capabilities → full map of all 12 specialists
     ├─ cn_route → explicit routing for any query
     │
     └─ Specialist extensions provide the actual tools
@@ -401,6 +402,18 @@ Map equivalent networking services across Azure, AWS, and GCP for our migration 
 ```
 ```
 Compare the cost of cross-cloud connectivity options: VPN vs dedicated interconnect vs SD-WAN.
+```
+
+### 💰 Pricing Analyst
+
+```
+How much will 5TB of monthly egress from Azure East US cost?
+```
+```
+Compare VPN gateway costs across Azure, AWS, and GCP for 500 Mbps.
+```
+```
+Should I use ExpressRoute or S2S VPN for 2 Gbps sustained? Show me the break-even.
 ```
 
 ### 🔀 Multi-Domain (cross-specialist workflows)
@@ -621,7 +634,7 @@ After running `cloud-networking init`, the installed layout mirrors the `extensi
 ```
 ~/.copilot/extensions/cloud-networking/
 ├── extension.mjs                          # Router + auto-routing hook
-└── specialists/                           # All 11 specialist directories
+└── specialists/                           # All 12 specialist directories
     └── (same structure as above)
 ```
 
@@ -647,7 +660,7 @@ specialist-name/
 | Extensions not loading (`/env` shows "Extensions: none") | Enable experimental mode: `copilot --experimental` — or use project-level install: `cloud-networking init --project` |
 | Tools not appearing after install | Restart Copilot CLI to reload extensions |
 | `cn_capabilities` not found | Verify `~/.copilot/extensions/cloud-networking/extension.mjs` exists |
-| Specialist tools missing | Run `cloud-networking status` to check — should list all 11 specialists |
+| Specialist tools missing | Run `cloud-networking status` to check — should list all 12 specialists |
 | Conflicting individual extensions | Run `cloud-networking init` — it removes old standalone specialist installs |
 | `npx` hangs or fails | Use Option E (manual install) — clone the repo and copy files directly |
 | Firewall config for unsupported vendor | Check the [14 supported vendors](#firewall-vendors-14) list |
