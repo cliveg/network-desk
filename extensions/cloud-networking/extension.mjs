@@ -1,11 +1,12 @@
 // Extension: cloud-networking (standalone)
-// Self-contained cloud networking agent that bundles all 12 specialist
+// Self-contained cloud networking agent that bundles all 19 specialist
 // roles and skills. No external extension dependencies required.
 //
 // Specialists: vnet-architect, firewall-engineer, load-balancer,
 // dns-specialist, private-link, hybrid-connectivity, network-security,
 // network-troubleshooter, vwan-sdwan, network-monitor, multi-cloud-net,
-// pricing-analyst
+// pricing-analyst, iac-generator, container-networking, cdn-edge,
+// network-automation, sase-sse, capacity-planner, ipv6-migration
 
 import { joinSession } from "@github/copilot-sdk/extension";
 import { readFile } from "node:fs/promises";
@@ -97,6 +98,34 @@ Covers cross-cloud connectivity architectures, service equivalency mapping, and 
     price: `You are now operating as the **pricing-analyst** agent.
 Call \`price_role\` first, then use: price_skill_egress_calc, price_skill_vpn_pricing, price_skill_circuit_pricing, price_skill_lb_pricing, price_skill_firewall_pricing, price_skill_cost_optimizer, price_skill_price_compare.
 Covers Azure, AWS, and GCP networking costs. Prices are indicative — always verify against current vendor pricing pages.`,
+
+    iac: `You are now operating as the **iac-generator** agent.
+Call \`iac_role\` first, then use: iac_skill_bicep_gen, iac_skill_terraform_gen, iac_skill_ansible_gen, iac_skill_arm_gen.
+Generates production-ready Infrastructure-as-Code for networking resources across Azure, AWS, and GCP. Supports Bicep, Terraform, Ansible, and ARM Templates. Code generation only — never executes deployments. Always provide validation commands before deployment commands.`,
+
+    cnet: `You are now operating as the **container-networking** agent.
+Call \`cnet_role\` first, then use: cnet_skill_cni_selection, cnet_skill_network_policy, cnet_skill_service_mesh, cnet_skill_ingress_design, cnet_skill_cross_cluster, cnet_skill_troubleshoot.
+Covers Kubernetes/container networking across AKS, EKS, and GKE — CNI plugins, network policies, service mesh, ingress controllers, Gateway API, and multi-cluster connectivity.`,
+
+    cdn: `You are now operating as the **cdn-edge** agent.
+Call \`cdn_role\` first, then use: cdn_skill_cdn_design, cdn_skill_edge_routing, cdn_skill_cache_optimization, cdn_skill_waf_edge, cdn_skill_troubleshoot.
+Covers Azure Front Door, AWS CloudFront, GCP Cloud CDN, edge compute, caching strategies, and WAF at the edge.`,
+
+    nauto: `You are now operating as the **network-automation** agent.
+Call \`nauto_role\` first, then use: nauto_skill_pipeline_design, nauto_skill_drift_detection, nauto_skill_policy_as_code, nauto_skill_testing, nauto_skill_rollback.
+Covers CI/CD pipelines for network changes, GitOps workflows, drift detection, policy-as-code, automated testing, and rollback strategies.`,
+
+    sase: `You are now operating as the **sase-sse** agent.
+Call \`sase_role\` first, then use: sase_skill_architecture, sase_skill_ztna_design, sase_skill_swg_casb, sase_skill_sdwan_integration, sase_skill_vendor_compare.
+Covers SASE/SSE architecture, Zero Trust Network Access, SWG, CASB, SD-WAN integration, and vendor comparison (Zscaler, Palo Alto Prisma, Netskope, Microsoft, Cisco, Fortinet).`,
+
+    ncap: `You are now operating as the **capacity-planner** agent.
+Call \`ncap_role\` first, then use: ncap_skill_bandwidth_forecast, ncap_skill_gateway_sizing, ncap_skill_throughput_calc, ncap_skill_scalability_design, ncap_skill_growth_model.
+Covers bandwidth forecasting, gateway/service sizing, throughput calculations, scalability limits, and growth modeling for cloud networking resources.`,
+
+    ipv6: `You are now operating as the **ipv6-migration** agent.
+Call \`ipv6_role\` first, then use: ipv6_skill_dual_stack, ipv6_skill_transition_plan, ipv6_skill_addressing, ipv6_skill_compatibility, ipv6_skill_troubleshoot.
+Covers dual-stack design, IPv6 transition strategies, addressing schemes, NAT64/DNS64/464XLAT compatibility, and IPv6 troubleshooting across Azure, AWS, and GCP.`,
 };
 
 // ── Routing table ──────────────────────────────────────────────────────
@@ -114,6 +143,13 @@ const ROUTES = [
     { domain: "Network Monitoring", prefix: "nmon", trigger: /\b(network\s+monitor|Connection\s+Monitor|traffic\s+analytics|flow\s+log|network\s+(alert|dashboard|baseline|observ)|NSG\s+flow|VPC\s+flow|network\s+metric)/i },
     { domain: "Multi-Cloud Networking", prefix: "mcn", trigger: /\b(multi[-\s]?cloud\s+(network|connect|transit)|cross[-\s]?cloud|cloud[-\s]?to[-\s]?cloud|transit\s+(architecture|design)|cloud\s+interconnect\s+design|service\s+mapping\s+(across|between)\s+cloud)/i },
     { domain: "Network Pricing", prefix: "price", trigger: /\b(pric(e|ing)|cost\s+(estimat|compar|analy|optim|break)|egress\s+cost|data\s+transfer\s+cost|TCO|total\s+cost|network\s+cost|billing|budget|monthly\s+cost|how\s+much\s+(does|will|is)|cheaper|expensive|save\s+money|cost\s+saving|right[-\s]?siz)/i },
+    { domain: "IaC Generator", prefix: "iac", trigger: /\b(bicep|terraform|arm\s+template|ansible|infra(structure)?[-\s]+(as[-\s]+code|code)|IaC|generate\s+(bicep|terraform|arm|ansible)|network\s+deployment\s+(template|code)|deploy\s+network(ing)?\s+(template|code))/i },
+    { domain: "Container Networking", prefix: "cnet", trigger: /\b(CNI|container\s+network|kubernetes\s+network|k8s\s+network|network\s+polic(y|ies)|service\s+mesh|istio|linkerd|cilium|calico|ingress\s+controller|Gateway\s+API|pod[-\s]+(to[-\s]+pod|network|cidr)|cluster\s+mesh|AKS\s+network|EKS\s+network|GKE\s+network)/i },
+    { domain: "CDN & Edge Networking", prefix: "cdn", trigger: /\b(CDN|content\s+delivery|Front\s+Door|CloudFront|Cloud\s+CDN|edge\s+(network|routing|compute)|cache\s+(optim|strateg|key|purg)|origin\s+(shield|group|failover)|Anycast|POP\s+(location|select)|WAF\s+at\s+edge)/i },
+    { domain: "Network Automation & GitOps", prefix: "nauto", trigger: /\b(network\s+automat|GitOps\s+network|CI[\s/]?CD\s+network|pipeline\s+network|drift\s+detect|policy[-\s]+as[-\s]+code|network\s+testing|network\s+rollback|terraform\s+(pipeline|ci|automation)|bicep\s+(pipeline|ci|automation))/i },
+    { domain: "SASE / SSE", prefix: "sase", trigger: /\b(SASE|SSE|zero\s+trust\s+network|ZTNA|secure\s+web\s+gateway|SWG|CASB|cloud\s+access\s+security|FWaaS|Prisma\s+Access|Netskope|security\s+service\s+edge|private\s+access|internet\s+access\s+gateway)/i },
+    { domain: "Network Capacity Planning", prefix: "ncap", trigger: /\b(capacity\s+plan|bandwidth\s+forecast|gateway\s+siz(e|ing)|throughput\s+calc|network\s+scalab|growth\s+model|network\s+limit|subscription\s+limit|scale\s+limit|network\s+capacity)/i },
+    { domain: "IPv6 Migration", prefix: "ipv6", trigger: /\b(IPv6|dual[-\s]?stack|NAT64|DNS64|464XLAT|IPv6\s+(migrat|transition|address|compat)|SLAAC|GUA|ULA|link[-\s]?local\s+address)/i },
 ];
 
 // ── Build capabilities summary ─────────────────────────────────────────
@@ -135,9 +171,19 @@ function buildCapabilitiesSummary() {
 | 10 | Network Monitoring | nmon_ | nmon_role | nmon_orchestrate |
 | 11 | Multi-Cloud Networking | mcn_ | mcn_role | mcn_orchestrate |
 | 12 | Network Pricing | price_ | price_role | price_orchestrate |
+| 13 | IaC Generator | iac_ | iac_role | iac_orchestrate |
+| 14 | Container Networking | cnet_ | cnet_role | cnet_orchestrate |
+| 15 | CDN & Edge Networking | cdn_ | cdn_role | cdn_orchestrate |
+| 16 | Network Automation & GitOps | nauto_ | nauto_role | nauto_orchestrate |
+| 17 | SASE / SSE | sase_ | sase_role | sase_orchestrate |
+| 18 | Network Capacity Planning | ncap_ | ncap_role | ncap_orchestrate |
+| 19 | IPv6 Migration | ipv6_ | ipv6_role | ipv6_orchestrate |
 
 ## Firewall Vendor Coverage
 Azure Firewall, AWS Network Firewall, GCP Cloud Firewall/Cloud Armor, Palo Alto (PAN-OS/Panorama/VM-Series/Prisma), Fortinet FortiGate (FortiOS/FortiManager), Check Point (R81+/SmartConsole/CloudGuard), Cisco ASA/FTD, Juniper SRX/vSRX, Zscaler (ZIA/ZPA), Sophos XG/XGS, OPNsense, pfSense, VyOS, iptables/nftables
+
+## IaC Generator — Supported Tools
+Bicep, Terraform (azurerm/aws/google), Ansible (azure.azcollection/amazon.aws/google.cloud), ARM Templates
 
 ## How to use
 1. Call the **role tool** (e.g. \`vnet_role\`) to load the specialist.
@@ -168,7 +214,7 @@ const tools = [
     // ── Discovery tools ──
     {
         name: "cn_capabilities",
-        description: "Returns a structured map of all 12 cloud networking specialist extensions, their role tools, and available skills. Use when you need to discover what networking capabilities are available.",
+        description: "Returns a structured map of all 19 cloud networking specialist extensions, their role tools, and available skills. Use when you need to discover what networking capabilities are available.",
         parameters: { type: "object", properties: {} },
         skipPermission: true,
         handler: async () => buildCapabilitiesSummary(),
@@ -422,6 +468,132 @@ const tools = [
         skillLoader("pricing-analyst", "cost-optimizer")),
     skillTool("price_skill_price_compare", "Skill: Cross-cloud network pricing comparison — side-by-side tables for equivalent services, workload scenario costs.",
         skillLoader("pricing-analyst", "price-compare")),
+
+    // ── 13. IaC Generator ──
+    roleTool("iac_role",
+        "Load the iac-generator agent role for producing Infrastructure-as-Code templates for networking resources. Call this first for any Bicep, Terraform, Ansible, or ARM template request.",
+        roleLoader("iac-generator")),
+    orchestratorTool("iac_orchestrate",
+        "Return the orchestration prompt for the IaC Generator agent. Use for generating deployment code (Bicep, Terraform, Ansible, ARM) for networking infrastructure.",
+        ORCHESTRATORS.iac),
+    skillTool("iac_skill_bicep_gen", "Skill: Generate Azure Bicep templates for networking resources — VNets, firewalls, VPN gateways, private endpoints, NSGs, route tables.",
+        skillLoader("iac-generator", "bicep-gen")),
+    skillTool("iac_skill_terraform_gen", "Skill: Generate Terraform configurations for networking across Azure (azurerm), AWS (aws), and GCP (google) providers.",
+        skillLoader("iac-generator", "terraform-gen")),
+    skillTool("iac_skill_ansible_gen", "Skill: Generate Ansible playbooks for network automation across Azure, AWS, and GCP using official collections.",
+        skillLoader("iac-generator", "ansible-gen")),
+    skillTool("iac_skill_arm_gen", "Skill: Generate ARM JSON templates for Azure networking resources with parameter files and linked template patterns.",
+        skillLoader("iac-generator", "arm-gen")),
+
+    // ── 14. Container Networking ──
+    roleTool("cnet_role",
+        "Load the container-networking agent role for Kubernetes/container networking across AKS, EKS, and GKE. Call this first for any K8s networking request.",
+        roleLoader("container-networking")),
+    orchestratorTool("cnet_orchestrate",
+        "Return the orchestration prompt for the Container Networking agent. Use for CNI, network policies, service mesh, ingress, multi-cluster networking.",
+        ORCHESTRATORS.cnet),
+    skillTool("cnet_skill_cni_selection", "Skill: CNI plugin comparison and selection — Azure CNI, Calico, Cilium, Flannel, WeaveNet. Decision matrix for AKS/EKS/GKE.",
+        skillLoader("container-networking", "cni-selection")),
+    skillTool("cnet_skill_network_policy", "Skill: Kubernetes network policies — native, Calico, Cilium. Namespace isolation, pod-level segmentation.",
+        skillLoader("container-networking", "network-policy")),
+    skillTool("cnet_skill_service_mesh", "Skill: Service mesh design — Istio, Linkerd. mTLS, traffic splitting, observability, ambient vs sidecar.",
+        skillLoader("container-networking", "service-mesh")),
+    skillTool("cnet_skill_ingress_design", "Skill: Ingress and Gateway API — NGINX, Traefik, AGIC, ALB Controller. TLS termination, path/host routing.",
+        skillLoader("container-networking", "ingress-design")),
+    skillTool("cnet_skill_cross_cluster", "Skill: Multi-cluster networking — Submariner, ClusterMesh, Istio multi-cluster, Fleet Manager.",
+        skillLoader("container-networking", "cross-cluster")),
+    skillTool("cnet_skill_troubleshoot", "Skill: Container networking troubleshooting — pod connectivity, CoreDNS, CNI failures, IP exhaustion, sidecar issues.",
+        skillLoader("container-networking", "troubleshoot")),
+
+    // ── 15. CDN & Edge Networking ──
+    roleTool("cdn_role",
+        "Load the cdn-edge agent role for CDN architecture and edge networking. Call this first for CDN, caching, or edge routing requests.",
+        roleLoader("cdn-edge")),
+    orchestratorTool("cdn_orchestrate",
+        "Return the orchestration prompt for the CDN & Edge agent. Use for CDN design, edge routing, caching, and WAF at edge.",
+        ORCHESTRATORS.cdn),
+    skillTool("cdn_skill_cdn_design", "Skill: CDN architecture — Azure Front Door, CloudFront, Cloud CDN. Origins, failover, private origins, HTTP/3.",
+        skillLoader("cdn-edge", "cdn-design")),
+    skillTool("cdn_skill_edge_routing", "Skill: Edge routing — Anycast, geo-routing, latency-based, edge compute (Rules Engine, Lambda@Edge, CloudFront Functions).",
+        skillLoader("cdn-edge", "edge-routing")),
+    skillTool("cdn_skill_cache_optimization", "Skill: Cache optimization — cache keys, TTL strategies, purge patterns, compression, streaming optimization.",
+        skillLoader("cdn-edge", "cache-optimization")),
+    skillTool("cdn_skill_waf_edge", "Skill: Security at the edge — WAF policies, bot management, rate limiting, DDoS at CDN, geo-blocking.",
+        skillLoader("cdn-edge", "waf-edge")),
+    skillTool("cdn_skill_troubleshoot", "Skill: CDN troubleshooting — cache miss analysis, origin health, TLS issues, latency debugging, purge failures.",
+        skillLoader("cdn-edge", "troubleshoot")),
+
+    // ── 16. Network Automation & GitOps ──
+    roleTool("nauto_role",
+        "Load the network-automation agent role for CI/CD, GitOps, and automation of network infrastructure. Call this first for network automation requests.",
+        roleLoader("network-automation")),
+    orchestratorTool("nauto_orchestrate",
+        "Return the orchestration prompt for the Network Automation agent. Use for pipelines, drift detection, policy-as-code, testing, rollback.",
+        ORCHESTRATORS.nauto),
+    skillTool("nauto_skill_pipeline_design", "Skill: CI/CD pipeline design for network IaC — GitHub Actions, Azure DevOps, stages, approvals, secrets.",
+        skillLoader("network-automation", "pipeline-design")),
+    skillTool("nauto_skill_drift_detection", "Skill: Configuration drift detection — Terraform state drift, Resource Graph queries, AWS Config, remediation.",
+        skillLoader("network-automation", "drift-detection")),
+    skillTool("nauto_skill_policy_as_code", "Skill: Policy-as-code — Azure Policy, OPA/Rego, Checkov, tfsec. Enforce network governance pre-deployment.",
+        skillLoader("network-automation", "policy-as-code")),
+    skillTool("nauto_skill_testing", "Skill: Network config testing — Terratest, Pester, pytest, smoke tests, integration tests, chaos engineering.",
+        skillLoader("network-automation", "testing")),
+    skillTool("nauto_skill_rollback", "Skill: Rollback and change management — state rollback, blue-green, canary, blast radius control, validation gates.",
+        skillLoader("network-automation", "rollback")),
+
+    // ── 17. SASE / SSE ──
+    roleTool("sase_role",
+        "Load the sase-sse agent role for Secure Access Service Edge and Security Service Edge architecture. Call this first for SASE/ZTNA/SSE requests.",
+        roleLoader("sase-sse")),
+    orchestratorTool("sase_orchestrate",
+        "Return the orchestration prompt for the SASE/SSE agent. Use for ZTNA, SWG, CASB, SD-WAN integration, vendor selection.",
+        ORCHESTRATORS.sase),
+    skillTool("sase_skill_architecture", "Skill: SASE/SSE architecture design — framework components, deployment models, migration from legacy VPN/proxy.",
+        skillLoader("sase-sse", "architecture")),
+    skillTool("sase_skill_ztna_design", "Skill: Zero Trust Network Access — identity-based access, app connectors, device posture, continuous trust.",
+        skillLoader("sase-sse", "ztna-design")),
+    skillTool("sase_skill_swg_casb", "Skill: Secure Web Gateway & CASB — URL filtering, TLS inspection, shadow IT, DLP, SaaS security posture.",
+        skillLoader("sase-sse", "swg-casb")),
+    skillTool("sase_skill_sdwan_integration", "Skill: SD-WAN with SASE integration — traffic steering, branch connectivity, QoS, vendor integrations.",
+        skillLoader("sase-sse", "sdwan-integration")),
+    skillTool("sase_skill_vendor_compare", "Skill: SASE/SSE vendor comparison — Zscaler, Palo Alto Prisma, Netskope, Cisco, Microsoft, Fortinet.",
+        skillLoader("sase-sse", "vendor-compare")),
+
+    // ── 18. Network Capacity Planning ──
+    roleTool("ncap_role",
+        "Load the capacity-planner agent role for network capacity planning and sizing. Call this first for bandwidth, sizing, or scalability requests.",
+        roleLoader("capacity-planner")),
+    orchestratorTool("ncap_orchestrate",
+        "Return the orchestration prompt for the Network Capacity Planner agent. Use for bandwidth forecasting, sizing, throughput, scalability.",
+        ORCHESTRATORS.ncap),
+    skillTool("ncap_skill_bandwidth_forecast", "Skill: Bandwidth forecasting — traffic modeling, baseline establishment, growth projections, threshold alerts.",
+        skillLoader("capacity-planner", "bandwidth-forecast")),
+    skillTool("ncap_skill_gateway_sizing", "Skill: Gateway and service sizing — VPN GW SKUs, ExpressRoute, App Gateway capacity units, firewall throughput.",
+        skillLoader("capacity-planner", "gateway-sizing")),
+    skillTool("ncap_skill_throughput_calc", "Skill: Throughput calculations — TCP window/RTT, BDP, encryption overhead, multi-flow limits, SNAT ports.",
+        skillLoader("capacity-planner", "throughput-calc")),
+    skillTool("ncap_skill_scalability_design", "Skill: Scalability patterns — subscription/account limits, horizontal scaling, when to split architectures.",
+        skillLoader("capacity-planner", "scalability-design")),
+    skillTool("ncap_skill_growth_model", "Skill: Growth modeling — user/device projections, traffic amplification, seasonal spikes, budget justification.",
+        skillLoader("capacity-planner", "growth-model")),
+
+    // ── 19. IPv6 Migration ──
+    roleTool("ipv6_role",
+        "Load the ipv6-migration agent role for IPv6 transition and dual-stack networking. Call this first for any IPv6 request.",
+        roleLoader("ipv6-migration")),
+    orchestratorTool("ipv6_orchestrate",
+        "Return the orchestration prompt for the IPv6 Migration agent. Use for dual-stack, transition planning, addressing, NAT64/DNS64.",
+        ORCHESTRATORS.ipv6),
+    skillTool("ipv6_skill_dual_stack", "Skill: Dual-stack design — Azure/AWS/GCP dual-stack VNets/VPCs, LB support, DNS (A+AAAA), application considerations.",
+        skillLoader("ipv6-migration", "dual-stack")),
+    skillTool("ipv6_skill_transition_plan", "Skill: IPv6 transition strategies — phased migration, support matrix per cloud, rollback, success criteria.",
+        skillLoader("ipv6-migration", "transition-plan")),
+    skillTool("ipv6_skill_addressing", "Skill: IPv6 addressing schemes — GUA, ULA, /48 per site convention, subnet allocation, cloud-specific constraints.",
+        skillLoader("ipv6-migration", "addressing")),
+    skillTool("ipv6_skill_compatibility", "Skill: IPv4/IPv6 compatibility — NAT64, DNS64, 464XLAT, SIIT. When to use each mechanism.",
+        skillLoader("ipv6-migration", "compatibility")),
+    skillTool("ipv6_skill_troubleshoot", "Skill: IPv6 troubleshooting — connectivity, ICMPv6, PMTUD, NDP, DNS resolution, firewall misconfigs.",
+        skillLoader("ipv6-migration", "troubleshoot")),
 ];
 
 // ── Register session ───────────────────────────────────────────────────
@@ -449,5 +621,5 @@ const session = await joinSession({
 });
 
 await session.log(
-    "cloud-networking loaded — 12 specialists, 99 tools, fully standalone (cn_capabilities, cn_route)",
+    "cloud-networking loaded — 19 specialists, 143 tools, fully standalone (cn_capabilities, cn_route)",
 );

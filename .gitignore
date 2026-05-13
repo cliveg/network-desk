@@ -3,3 +3,6 @@ node_modules/
 *.log
 out/
 .github/extensions/cloud-networking/
+
+# Finance Desk extension (installed per-developer)
+.github/extensions/finance-desk/

@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
 
-**Your cloud networking AI team for GitHub Copilot CLI.** 12 specialist agents covering VNet design, firewalls (14 vendors), load balancing, DNS, private connectivity, and more — routed automatically.
+**Your cloud networking AI team for GitHub Copilot CLI.** 19 specialist agents covering VNet design, firewalls (14 vendors), load balancing, DNS, private connectivity, IaC generation, container networking, CDN/edge, SASE/SSE, and more — routed automatically.
 
 ---
 
@@ -13,7 +13,7 @@
 |---|---------|-------------|
 | 🚀 | [Quick Start](#quick-start) | One-command install |
 | 💡 | [What is Cloud Networking?](#what-is-cloud-networking) | Overview and key concepts |
-| 👥 | [The Team](#the-team) | All 12 specialists at a glance |
+| 👥 | [The Team](#the-team) | All 19 specialists at a glance |
 | 📦 | [Installation](#installation) | 5 ways to install (npx user-level, npx project-level, npm, Copilot prompt, manual) |
 | 🖥️ | [CLI Reference](#cli-reference) | `init`, `status`, `uninstall`, `--version` |
 | ⚙️ | [How It Works](#how-it-works) | Architecture, routing, and workflow |
@@ -56,6 +56,13 @@ Each specialist runs with its own domain expertise, guardrails, and workflow. Th
 | **Network Monitor** | `nmon_` | Flow logs, traffic analytics, connection monitors, dashboards, alerts |
 | **Multi-Cloud Networking** | `mcn_` | Cross-cloud transit, addressing, service mapping, cost comparison |
 | **Pricing Analyst** | `price_` | Network cost estimation, egress calculation, pricing comparison, cost optimization |
+| **IaC Generator** | `iac_` | Bicep, Terraform, Ansible, ARM templates for networking infrastructure |
+| **Container Networking** | `cnet_` | CNI plugins, network policies, service mesh, ingress, multi-cluster (AKS/EKS/GKE) |
+| **CDN & Edge Networking** | `cdn_` | Azure Front Door, CloudFront, Cloud CDN, edge routing, caching, WAF at edge |
+| **Network Automation & GitOps** | `nauto_` | CI/CD pipelines, drift detection, policy-as-code, testing, rollback |
+| **SASE / SSE** | `sase_` | ZTNA, SWG, CASB, FWaaS, SD-WAN integration, vendor comparison |
+| **Network Capacity Planning** | `ncap_` | Bandwidth forecasting, gateway sizing, throughput calculations, growth modeling |
+| **IPv6 Migration** | `ipv6_` | Dual-stack design, transition planning, addressing, NAT64/DNS64, troubleshooting |
 
 ### Firewall Vendors (14)
 
