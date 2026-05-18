@@ -1,0 +1,94 @@
+# Changelog
+
+All notable changes to **@dmauser/cloud-networking** are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [Unreleased]
+
+### Added — Tier 1 specialist coverage (10 new skills)
+
+Implements the highest-priority "clear coverage gaps" identified in the specialist-improvement audit. Tool count: 146 → **156**. All skills follow the standard template (purpose · decision tree · per-vendor reference · workflow · verification checklist · references) and end with the analysis-only guardrail.
+
+| Specialist | New skill | Scope |
+|---|---|---|
+| firewall-engineer | `fw_skill_policy_test` | Rule simulation & dry-run before deploy. Azure FW Policy Analyzer, AWS NFW log testing, PAN `test security-policy-match`, FortiGate `diagnose firewall policy lookup`, Check Point `fw monitor`, Cisco `packet-tracer`, nftables/iptables. Log-driven shadow testing + automated rule-coverage test cases + pre-deployment checklist. |
+| load-balancer | `lb_skill_tls_cert_mgmt` | Full cert lifecycle. Source selection (managed / ACME / public CA / private CA), storage (Key Vault / ACM / Secret Manager / cert-manager), per-LB deployment (AGW, Front Door, ALB, NLB, CloudFront, GCP HTTPS LB, NGINX, HAProxy), SNI strategy, ALPN, rotation, monitoring (3-tier expiry alerts), emergency revocation runbook. |
+| dns-specialist | `dns_skill_dnssec_design` | DNSSEC end-to-end. Algorithm selection (default ECDSA P-256), KSK/ZSK/CSK, signing automation, NSEC3 RFC 9276 parameters, DS-record delegation flow, pre-publish ZSK rollover, double-DS KSK rollover, monitoring, emergency rollback. Azure DNS, Route 53, Cloud DNS, BIND9. |
+| hybrid-connectivity | `hyb_skill_bgp_design` | Dedicated BGP. ASN allocation, prefix/AS-PATH/community filters, attribute manipulation (Local-Pref, prepend, MED), multi-circuit active/active and active/passive, BFD + GR, loop prevention, cloud-specific gotchas (Azure ExpressRoute/VPN, AWS DX/VPN, GCP Cloud Router). |
+| network-security | `nsec_skill_zero_trust_architecture` | NIST SP 800-207 / CISA ZTMM v2.0 alignment. Seven pillars, PEP/PDP placement, identity-aware access, microsegmentation, east-west mTLS, egress control, DNS-as-control, continuous verification (CAE, AWS Verified Access), workload identity (SPIFFE / managed identities), threat model + anti-patterns. |
+| network-security | `nsec_skill_waf_policy_design` | Cross-cloud WAF design. Five-layer model (managed rule sets → custom rules → rate limiting → bot management → geo/IP), Detect→Prevent rollout, OWASP CRS anomaly tuning, false-positive exclusion patterns, integration with CDN/DDoS/API gateway/ZTNA, logging+alerts. Azure WAF, AWS WAFv2, GCP Cloud Armor, Cloudflare, F5, Imperva, FortiWeb. |
+| network-troubleshooter | `ntsh_skill_tls_handshake_debug` | Handshake failure debugging. Full IANA TLS-alert decoder table (40/42/48/51/112/116/120 etc.), `openssl s_client` / `testssl.sh` / `nmap ssl-enum-ciphers` workflows, cert-chain & SAN validation, SNI/ALPN/mTLS failure patterns, OCSP stapling, clock skew, middlebox interception, decryption via SSLKEYLOGFILE, QUIC/HTTP3. |
+| vwan-sdwan | `vwan_skill_secured_vhub_design` | Azure Secured Virtual Hub patterns. When to use vs hub-spoke+NVA, routing-intent modes (internet/private/both), Azure Firewall vs partner NVA SKU selection, rule-set design, forced-tunneling, HA + cross-region, Private Endpoint inspection caveat, observability, cost model, common pitfalls. |
+| network-monitor | `nmon_skill_synthetic_monitoring` | Proactive user-perspective probing. Azure Connection Monitor + App Insights availability tests; AWS CloudWatch Synthetics; GCP Uptime Checks; self-hosted Blackbox Exporter + Prometheus; global PoP vendors (Catchpoint, ThousandEyes, Datadog, Pingdom). Probe design principles, multi-region thresholds, SLO/SLI integration, dashboards, anti-patterns. |
+| pricing-analyst | `price_skill_egress_architecture` | Structurally avoid egress charges. PrivateLink/Gateway Endpoints, CDN offload with cache discipline, regional pinning, cross-AZ minimization, dedicated interconnects break-even, egress-free storage tiers (R2, B2), compression/batching, multi-cloud peering exchanges, AWS NAT GW tax mitigation, commit-discount tiers. Quantified before/after modeling. |
+
+Orchestrator prompts (`ORCHESTRATORS.fw`, `.lb`, `.dns`, `.hyb`, `.nsec`, `.ntsh`, `.vwan`, `.nmon`, `.price`) updated to include the new skill names so the routing layer engages them automatically.
+
+### Added — Deep PCAP analysis skill (network-troubleshooter)
+- New skill **`ntsh_skill_pcap_analysis`** dedicated to deep packet-capture analysis with Wireshark, tshark, and the surrounding toolchain (capinfos, editcap, mergecap, reordercap, text2pcap, Zeek, ngrep, pyshark/scapy).
+- Complements (does not replace) `ntsh_skill_packet_capture`: capture-side mechanics stay there; analysis-side workflows move into the new skill. The orchestrator pairs the two automatically.
+- Coverage: capture profiling (`capinfos`), tshark cheatsheet (TCP retransmissions, RTT, throughput, zero-window stalls, DNS latency, TLS handshake inspection, HTTP timing, fragmentation, microbursts), Wireshark Statistics & Expert Info navigation, six diagnostic playbooks (slow downloads, TLS failures, jitter, asymmetric routing, MTU, NAT/SNAT exhaustion), dual-point capture merging, decryption (TLS keylog, IPsec, WireGuard, Kerberos), anonymization for safe sharing, and cloud-specific PCAP source gotchas (Azure Network Watcher, AWS VPC Traffic Mirroring, GCP Packet Mirroring, container netns, service mesh sidecars).
+- Updated `network-troubleshooter` agent to reference Wireshark/tshark/Zeek and point at the new skill.
+- Tool count: 145 → 146.
+
+### Added — Auto-update check and `update` command
+- The extension now performs a **lightweight automatic update check** against GitHub on session start. Behavior: at most once every 24 h, ~4 s network timeout, fully async, never blocks extension load, fails silently on any error. When a newer version is detected, a one-line `cloud-networking: update available — installed X.Y.Z, latest A.B.C. Run \`npx github:dmauser/cloud-networking update\` to upgrade.` notice is written to the session log.
+- Opt-out via `CLOUD_NETWORKING_NO_UPDATE_CHECK=1` environment variable.
+- New CLI command **`cloud-networking update`** (alias `upgrade`) — auto-detects whether the user has a user-level install, a project-level install, or both, and re-installs each in place by pulling the latest from `github:dmauser/cloud-networking`.
+- New CLI flag **`cloud-networking --version`** / `-v` to print the installed CLI version.
+- Install metadata is now recorded at `<install-dir>/.install-meta.json` (version, install type, install timestamp) at every `init` / `init --project`, and surfaced by `cloud-networking status`.
+- README's "Updating" section rewritten to document the auto-check, the new `update` command, the opt-out env var, and a pointer to `CHANGELOG.md`.
+- `.gitignore` updated to exclude the runtime `.install-meta.json` and `.update-check.json` files anywhere in the tree.
+
+## [1.1.0] — 2026-05-18
+
+### Added — `@cloud-networking` mention trigger
+- New explicit invocation: type **`@cloud-networking`** anywhere in a prompt to engage the extension. The `onUserPromptSubmitted` hook recognizes the mention (case-insensitive, accepts `@cloud-networking`, `@cloud_networking`, `@cloudnetworking`) and always engages the router, even when no specialist keyword matches.
+- When mentioned without a keyword match, the router instructs the model to silently call `cn_route` (and `cn_capabilities` if still ambiguous) to pick the right specialist before responding.
+- Routing context now tells the model to respond in **natural language** rather than exposing internal tool names to the user.
+
+### Added — Excalidraw and draw.io diagram skills (vnet-architect)
+- `vnet_skill_excalidraw_diagram` — generates `.excalidraw` JSON (hand-drawn / whiteboard style), suitable for slides, workshops, and design reviews. Always prefers official Azure / AWS / GCP icon libraries from [libraries.excalidraw.com](https://libraries.excalidraw.com).
+- `vnet_skill_drawio_diagram` — generates `.drawio` XML with native cloud-provider stencils (`mxgraph.azure2`, `mxgraph.aws4`, `mxgraph.gcp2`, `mxgraph.kubernetes`). Suitable for polished, presentation-ready architecture diagrams and PNG/SVG/PDF export.
+
+### Changed — Diagram policy (Mermaid is the primary format)
+- `vnet_skill_network_diagram` is now declared the **default** diagram format for every design output. It renders inline in GitHub, VS Code, and most chat clients with zero setup.
+- New 3-tier icon-selection order, enforced across all three diagram skills:
+  1. **Official cloud-provider icons** (Iconify refs in Mermaid `architecture-beta`: `logos:microsoft-azure`, `logos:aws`, `logos:google-cloud`, `logos:kubernetes`; native stencils in draw.io; community libraries in Excalidraw).
+  2. **Emoji fallback** for clients that don't render Iconify or for vendor firewalls without stencils — full mapping table included (🛡️ firewall, 🔐 VPN gateway, ⚡ ExpressRoute, ⚖️ load balancer, 🌐 VNet, 🔒 PrivateLink, 🏢 on-prem, ☁️ internet, 🐳 container, …).
+  3. **Plain text label** with the canonical product name as a last resort.
+- Every Mermaid diagram now ends with a built-in offer to also generate the diagram as Excalidraw or draw.io on request — alternative formats are **opt-in** and never produced by default.
+- Updated the `vnet-architect` agent persona and the VNet orchestrator prompt to enforce this policy.
+
+### Changed — README and user-facing examples
+- All usage examples rewritten as natural-language prompts prefixed with **`@cloud-networking ...`** (every specialist and every multi-domain example, ~60 examples in total).
+- "How It Works" rewritten to highlight the `@cloud-networking` mention as the trigger — no more `cn_capabilities` / `cn_route` / `<prefix>_role` plumbing in user-facing documentation.
+- "Discovery" section rewritten as natural-language asks ("what can you help me with?", "which specialists cover firewalls?").
+- Quick Start now shows two natural-language invocation examples.
+- Troubleshooting row about `cn_capabilities` replaced with one about `@cloud-networking` not engaging.
+- New **Changelog** link in the table of contents.
+
+### Internal
+- Bumped tool count from 143 → 145 (two new diagram skills).
+- Reinstalled to `~/.copilot/extensions/cloud-networking/` with `cloud-networking init`.
+
+---
+
+## [1.0.0]
+
+### Added
+- Initial public release of `@dmauser/cloud-networking`.
+- 19 specialist agents covering VNet design, firewalls (14 vendors), load balancing, DNS, private link, hybrid connectivity, network security, troubleshooting, vWAN/SD-WAN, monitoring, multi-cloud, pricing, IaC, container networking, CDN/edge, network automation/GitOps, SASE/SSE, capacity planning, and IPv6 migration.
+- Auto-routing hook (`onUserPromptSubmitted`) detecting networking keywords.
+- Discovery tools `cn_capabilities` and `cn_route`.
+- CLI installer with `init`, `init --project`, `status`, `uninstall` commands.
+- Mermaid network diagram skill for vnet-architect.
+
+---
+
+[Unreleased]: https://github.com/dmauser/cloud-networking/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/dmauser/cloud-networking/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/dmauser/cloud-networking/releases/tag/v1.0.0

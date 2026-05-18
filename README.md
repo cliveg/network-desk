@@ -20,6 +20,7 @@
 | 📝 | [Usage Examples](#usage-examples) | Example prompts for every specialist |
 | 📂 | [Repository Structure](#repository-structure) | Full folder tree and conventions |
 | 🔧 | [Troubleshooting](#troubleshooting) | Common issues and fixes |
+| 📜 | [Changelog](CHANGELOG.md) | Release notes and version history |
 | 📄 | [License](#license) | MIT |
 
 ---
@@ -30,7 +31,17 @@
 npx github:dmauser/cloud-networking init
 ```
 
-That's it. Launch Copilot CLI with experimental mode (`copilot --experimental`) in any repo and start asking networking questions.
+That's it. Launch Copilot CLI with experimental mode (`copilot --experimental`) in any repo and trigger the extension with **`@cloud-networking`** followed by what you need:
+
+```
+@cloud-networking design a hub-spoke VNet topology for a 3-tier app across dev/staging/prod
+```
+
+```
+@cloud-networking generate Palo Alto rules to allow HTTPS from my app subnet to a backend on port 8443
+```
+
+The coordinator picks the right specialist automatically and responds in plain language — no tool names to remember.
 
 ## What is Cloud Networking?
 
@@ -214,11 +225,31 @@ You should see all 19 specialists listed with their tools.
 
 ### Updating
 
-To update to the latest version, re-run the install command. It safely replaces the existing installation:
+The extension automatically checks GitHub for a newer version on each session start (throttled to once every 24h, fully non-blocking, never blocks load). When an update is available, you'll see a one-line `cloud-networking: update available — installed X.Y.Z, latest A.B.C` notice in the session log.
+
+To update, run the **`update`** command — it auto-detects whether you have a user-level install, a project-level install (in the current repo), or both, and re-installs each in place:
 
 ```bash
-npx github:dmauser/cloud-networking init
+npx github:dmauser/cloud-networking update
 ```
+
+Equivalent shortcuts (any of these re-pulls the latest):
+
+```bash
+# Re-run init explicitly (replaces the existing install)
+npx github:dmauser/cloud-networking init             # user-level
+npx github:dmauser/cloud-networking init --project   # project-level
+
+# If installed globally
+npm install -g github:dmauser/cloud-networking
+cloud-networking update
+```
+
+**Opt out of auto-check.** Set the environment variable `CLOUD_NETWORKING_NO_UPDATE_CHECK=1` to disable the periodic GitHub poll entirely.
+
+Each install records its version in `<install-dir>/.install-meta.json`, and `cloud-networking status` will display it alongside the install date.
+
+See [CHANGELOG.md](CHANGELOG.md) for what's new in each release.
 
 ### Uninstall
 
@@ -241,295 +272,293 @@ The `cloud-networking` CLI manages installation of the Copilot extensions. You c
 |---------|-------------|
 | `cloud-networking init` | Install/reinstall extensions to `~/.copilot/extensions/` |
 | `cloud-networking init --project` | Install extensions to `.github/extensions/` in current repo |
-| `cloud-networking status` | Check installation status and list available specialists |
+| `cloud-networking update` | Re-install over any existing user-level and/or project-level install (pulls latest from GitHub) |
+| `cloud-networking status` | Check installation status, version, and list available specialists |
 | `cloud-networking uninstall` | Remove installed extensions |
+| `cloud-networking --version` | Print the installed CLI version |
 | `cloud-networking help` | Show CLI help |
+
+The extension also performs an **automatic update check** against GitHub once every 24 hours when a Copilot session starts, and prints a one-line notice if a newer version is available. Set `CLOUD_NETWORKING_NO_UPDATE_CHECK=1` to disable.
 
 ## How It Works
 
+Trigger the extension with **`@cloud-networking`** anywhere in your prompt. The coordinator detects the mention, picks the right specialist(s) based on what you ask, loads their role and skills behind the scenes, and replies in natural language.
+
 ```
-User prompt
-    │
-    ▼
-Cloud Networking Extension (~/.copilot/extensions/cloud-networking/extension.mjs)
-    │
-    ├─ Auto-routing hook detects networking keywords
-    │   └─ Injects routing context → "use fw_* tools for firewall config"
-    │
-    ├─ cn_capabilities → full map of all 19 specialists
-    ├─ cn_route → explicit routing for any query
-    │
-    └─ Specialist extensions provide the actual tools
-        ├─ vnet_role, vnet_orchestrate, vnet_skill_hub_spoke_design, ...
-        ├─ fw_role, fw_orchestrate, fw_skill_config_gen, ...
-        ├─ iac_role, iac_orchestrate, iac_skill_bicep_gen, ...
-        └─ ntsh_role, ntsh_orchestrate, ntsh_skill_packet_capture, ...
+You: @cloud-networking design a hub-spoke VNet with Azure Firewall and
+     monitor east-west traffic with flow logs
+
+         │
+         ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Cloud Networking coordinator                                │
+   │ • Detects @cloud-networking mention                         │
+   │ • Identifies multi-domain intent:                           │
+   │     VNet design · Firewall · Network monitoring             │
+   │ • Engages the matching specialists in sequence              │
+   └─────────────────────────────────────────────────────────────┘
+         │
+         ▼
+   Specialists run their domain workflows and the coordinator
+   stitches the answer together in plain language.
 ```
 
-### Typical workflow
-
-Each specialist follows a consistent pattern:
-
-1. **Load the role** — call `<prefix>_role` (e.g. `fw_role`) to load the specialist's persona and workflow
-2. **Orchestrate** — call `<prefix>_orchestrate` for step-by-step guidance
-3. **Run skills** — call individual `<prefix>_skill_*` tools to perform the work
-
-You don't need to call these manually — just describe what you need and the routing hook handles it.
+You never need to call individual tools — just describe what you need after `@cloud-networking` and the coordinator handles the rest.
 
 ## Usage Examples
 
-Just describe what you need in plain language — the router picks the right specialist automatically.
+Trigger the extension with **`@cloud-networking`** and describe what you need in plain language — the coordinator picks the right specialist automatically.
 
 ### 🏗️ VNet/Subnet Architect
 
 ```
-Design a hub-spoke VNet topology for a 3-tier app with separate dev/staging/prod environments.
+@cloud-networking Design a hub-spoke VNet topology for a 3-tier app with separate dev/staging/prod environments.
 ```
 ```
-Plan an IP address scheme for 12 VNets across 3 Azure regions with no overlapping CIDRs.
+@cloud-networking Plan an IP address scheme for 12 VNets across 3 Azure regions with no overlapping CIDRs.
 ```
 ```
-Generate a Mermaid diagram of my current hub-spoke peering architecture.
+@cloud-networking Generate a Mermaid diagram of my current hub-spoke peering architecture.
 ```
 
 ### 🔥 Firewall Engineer
 
 ```
-Generate Palo Alto PAN-OS rules to allow HTTPS from my app subnet to a backend API on port 8443.
+@cloud-networking Generate Palo Alto PAN-OS rules to allow HTTPS from my app subnet to a backend API on port 8443.
 ```
 ```
-Migrate these Cisco ASA ACLs to Azure Firewall policy rules.
+@cloud-networking Migrate these Cisco ASA ACLs to Azure Firewall policy rules.
 ```
 ```
-Audit my FortiGate ruleset for shadowed, redundant, or overly permissive rules.
+@cloud-networking Audit my FortiGate ruleset for shadowed, redundant, or overly permissive rules.
 ```
 
 ### ⚖️ Load Balancer
 
 ```
-Which Azure load balancer should I use — Standard LB, App Gateway, or Front Door?
+@cloud-networking Which Azure load balancer should I use — Standard LB, App Gateway, or Front Door?
 ```
 ```
-Design health probes for a multi-region API behind Azure Front Door.
+@cloud-networking Design health probes for a multi-region API behind Azure Front Door.
 ```
 ```
-Configure SSL offload on an Application Gateway with end-to-end TLS.
+@cloud-networking Configure SSL offload on an Application Gateway with end-to-end TLS.
 ```
 
 ### 🌐 DNS Specialist
 
 ```
-Design a private DNS zone architecture for 5 VNets with hub-spoke peering.
+@cloud-networking Design a private DNS zone architecture for 5 VNets with hub-spoke peering.
 ```
 ```
-Audit my DNS records for stale entries, mismatched TTLs, and missing PTR records.
+@cloud-networking Audit my DNS records for stale entries, mismatched TTLs, and missing PTR records.
 ```
 ```
-Troubleshoot — internal VMs can't resolve privatelink.blob.core.windows.net.
+@cloud-networking Troubleshoot — internal VMs can't resolve privatelink.blob.core.windows.net.
 ```
 
 ### 🔒 Private Link Engineer
 
 ```
-Set up private endpoints for Azure SQL and Storage with proper DNS integration.
+@cloud-networking Set up private endpoints for Azure SQL and Storage with proper DNS integration.
 ```
 ```
-Review the security posture of my private endpoint configuration — any gaps?
+@cloud-networking Review the security posture of my private endpoint configuration — any gaps?
 ```
 ```
-Expose my internal API to a partner tenant using Private Link Service.
+@cloud-networking Expose my internal API to a partner tenant using Private Link Service.
 ```
 
 ### 🔗 Hybrid Connectivity
 
 ```
-Design a site-to-site VPN between Azure and our on-prem data center with BGP.
+@cloud-networking Design a site-to-site VPN between Azure and our on-prem data center with BGP.
 ```
 ```
-Plan an ExpressRoute circuit with Global Reach for US-East and West Europe.
+@cloud-networking Plan an ExpressRoute circuit with Global Reach for US-East and West Europe.
 ```
 ```
-Design a failover strategy: ExpressRoute primary, VPN backup with automatic failover.
+@cloud-networking Design a failover strategy: ExpressRoute primary, VPN backup with automatic failover.
 ```
 
 ### 🛡️ Network Security
 
 ```
-Audit all NSGs in my subscription — flag any-any rules, unused NSGs, and overly broad ranges.
+@cloud-networking Audit all NSGs in my subscription — flag any-any rules, unused NSGs, and overly broad ranges.
 ```
 ```
-Design a micro-segmentation strategy for a PCI-DSS compliant environment.
+@cloud-networking Design a micro-segmentation strategy for a PCI-DSS compliant environment.
 ```
 ```
-Analyze NSG flow logs to identify top talkers and unexpected traffic patterns.
+@cloud-networking Analyze NSG flow logs to identify top talkers and unexpected traffic patterns.
 ```
 
 ### 🔧 Network Troubleshooter
 
 ```
-My VM in spoke-vnet-02 can't reach the database in hub-vnet — diagnose the connectivity path.
+@cloud-networking My VM in spoke-vnet-02 can't reach the database in hub-vnet — diagnose the connectivity path.
 ```
 ```
-Run a packet capture on my NVA to debug why return traffic is being dropped.
+@cloud-networking Run a packet capture on my NVA to debug why return traffic is being dropped.
 ```
 ```
-Investigate high latency between my Azure VMs and on-prem servers — is it routing or MTU?
+@cloud-networking Investigate high latency between my Azure VMs and on-prem servers — is it routing or MTU?
 ```
 
 ### 🌍 Virtual WAN / SD-WAN
 
 ```
-Design a Virtual WAN topology for 20 branch offices across 3 regions.
+@cloud-networking Design a Virtual WAN topology for 20 branch offices across 3 regions.
 ```
 ```
-Configure routing intent for internet breakout through Azure Firewall in my vWAN hub.
+@cloud-networking Configure routing intent for internet breakout through Azure Firewall in my vWAN hub.
 ```
 ```
-Integrate a Palo Alto NVA into my Virtual WAN hub for traffic inspection.
+@cloud-networking Integrate a Palo Alto NVA into my Virtual WAN hub for traffic inspection.
 ```
 
 ### 📊 Network Monitor
 
 ```
-Set up NSG flow logs with Traffic Analytics for all my production VNets.
+@cloud-networking Set up NSG flow logs with Traffic Analytics for all my production VNets.
 ```
 ```
-Build a monitoring dashboard for VPN gateway throughput, latency, and tunnel status.
+@cloud-networking Build a monitoring dashboard for VPN gateway throughput, latency, and tunnel status.
 ```
 ```
-Create alert rules for when ExpressRoute circuit utilization exceeds 80%.
+@cloud-networking Create alert rules for when ExpressRoute circuit utilization exceeds 80%.
 ```
 
 ### ☁️ Multi-Cloud Networking
 
 ```
-Design a transit architecture connecting Azure, AWS, and GCP with consistent addressing.
+@cloud-networking Design a transit architecture connecting Azure, AWS, and GCP with consistent addressing.
 ```
 ```
-Map equivalent networking services across Azure, AWS, and GCP for our migration plan.
+@cloud-networking Map equivalent networking services across Azure, AWS, and GCP for our migration plan.
 ```
 ```
-Compare the cost of cross-cloud connectivity options: VPN vs dedicated interconnect vs SD-WAN.
+@cloud-networking Compare the cost of cross-cloud connectivity options: VPN vs dedicated interconnect vs SD-WAN.
 ```
 
 ### 💰 Pricing Analyst
 
 ```
-How much will 5TB of monthly egress from Azure East US cost?
+@cloud-networking How much will 5TB of monthly egress from Azure East US cost?
 ```
 ```
-Compare VPN gateway costs across Azure, AWS, and GCP for 500 Mbps.
+@cloud-networking Compare VPN gateway costs across Azure, AWS, and GCP for 500 Mbps.
 ```
 ```
-Should I use ExpressRoute or S2S VPN for 2 Gbps sustained? Show me the break-even.
+@cloud-networking Should I use ExpressRoute or S2S VPN for 2 Gbps sustained? Show me the break-even.
 ```
 
 ### 📐 IaC Generator
 
 ```
-Generate a Bicep template for a hub-spoke VNet with Azure Firewall and VPN Gateway.
+@cloud-networking Generate a Bicep template for a hub-spoke VNet with Azure Firewall and VPN Gateway.
 ```
 ```
-Create Terraform modules for a multi-region AWS VPC with Transit Gateway.
+@cloud-networking Create Terraform modules for a multi-region AWS VPC with Transit Gateway.
 ```
 ```
-Write an Ansible playbook to deploy NSGs and route tables for my Azure network.
+@cloud-networking Write an Ansible playbook to deploy NSGs and route tables for my Azure network.
 ```
 
 ### 🐳 Container Networking
 
 ```
-Which CNI plugin should I use for my AKS cluster — Azure CNI Overlay or Cilium?
+@cloud-networking Which CNI plugin should I use for my AKS cluster — Azure CNI Overlay or Cilium?
 ```
 ```
-Design Kubernetes network policies to isolate namespaces while allowing shared services.
+@cloud-networking Design Kubernetes network policies to isolate namespaces while allowing shared services.
 ```
 ```
-Compare Istio vs Linkerd for my service mesh — we need mTLS and traffic splitting.
+@cloud-networking Compare Istio vs Linkerd for my service mesh — we need mTLS and traffic splitting.
 ```
 
 ### 🌐 CDN & Edge Networking
 
 ```
-Design an Azure Front Door configuration with multi-origin failover and caching.
+@cloud-networking Design an Azure Front Door configuration with multi-origin failover and caching.
 ```
 ```
-Optimize cache hit ratio for my API responses — what cache key strategy should I use?
+@cloud-networking Optimize cache hit ratio for my API responses — what cache key strategy should I use?
 ```
 ```
-Configure WAF rules at the edge to block bot traffic while allowing legitimate API calls.
+@cloud-networking Configure WAF rules at the edge to block bot traffic while allowing legitimate API calls.
 ```
 
 ### 🔄 Network Automation & GitOps
 
 ```
-Design a GitHub Actions pipeline for deploying Terraform network changes with approval gates.
+@cloud-networking Design a GitHub Actions pipeline for deploying Terraform network changes with approval gates.
 ```
 ```
-Set up drift detection to alert when someone makes out-of-band changes to my NSGs.
+@cloud-networking Set up drift detection to alert when someone makes out-of-band changes to my NSGs.
 ```
 ```
-What policy-as-code rules should I enforce to prevent public IP creation in production?
+@cloud-networking What policy-as-code rules should I enforce to prevent public IP creation in production?
 ```
 
 ### 🛡️ SASE / SSE
 
 ```
-Design a SASE architecture to replace our legacy VPN for 5,000 remote users.
+@cloud-networking Design a SASE architecture to replace our legacy VPN for 5,000 remote users.
 ```
 ```
-Compare Zscaler ZPA vs Microsoft Entra Private Access for our ZTNA implementation.
+@cloud-networking Compare Zscaler ZPA vs Microsoft Entra Private Access for our ZTNA implementation.
 ```
 ```
-How should I integrate SD-WAN with our SASE platform for branch office connectivity?
+@cloud-networking How should I integrate SD-WAN with our SASE platform for branch office connectivity?
 ```
 
 ### 📏 Network Capacity Planning
 
 ```
-What VPN Gateway SKU do I need for 800 Mbps sustained throughput with 15 tunnels?
+@cloud-networking What VPN Gateway SKU do I need for 800 Mbps sustained throughput with 15 tunnels?
 ```
 ```
-Forecast our ExpressRoute bandwidth needs — we're growing 30% per quarter.
+@cloud-networking Forecast our ExpressRoute bandwidth needs — we're growing 30% per quarter.
 ```
 ```
-Calculate maximum single-flow TCP throughput for a 50ms RTT link with 64KB window.
+@cloud-networking Calculate maximum single-flow TCP throughput for a 50ms RTT link with 64KB window.
 ```
 
 ### 🔢 IPv6 Migration
 
 ```
-Design a dual-stack VNet configuration for my Azure workloads.
+@cloud-networking Design a dual-stack VNet configuration for my Azure workloads.
 ```
 ```
-Plan an IPv6 migration for our Azure environment — which services support IPv6 today?
+@cloud-networking Plan an IPv6 migration for our Azure environment — which services support IPv6 today?
 ```
 ```
-Set up NAT64/DNS64 so my IPv6-only VMs can reach IPv4-only external services.
+@cloud-networking Set up NAT64/DNS64 so my IPv6-only VMs can reach IPv4-only external services.
 ```
 
 ### 🔀 Multi-Domain (cross-specialist workflows)
 
 ```
-Design a hub-spoke VNet, add firewall rules for east-west traffic, and set up monitoring.
+@cloud-networking Design a hub-spoke VNet, add firewall rules for east-west traffic, and set up monitoring.
 ```
 ```
-Plan a hybrid connectivity setup with ExpressRoute, configure private endpoints for PaaS services, and audit the NSGs.
+@cloud-networking Plan a hybrid connectivity setup with ExpressRoute, configure private endpoints for PaaS services, and audit the NSGs.
 ```
 ```
-Troubleshoot connectivity from on-prem through VPN to a private endpoint, and check DNS resolution along the path.
+@cloud-networking Troubleshoot connectivity from on-prem through VPN to a private endpoint, and check DNS resolution along the path.
 ```
 
 ### 🔎 Discovery
 
 ```
-show me the cloud-networking capabilities
+@cloud-networking what can you help me with?
 ```
 ```
-what tools does the firewall engineer have?
+@cloud-networking which specialists cover firewalls and what do they do?
 ```
 ```
-route this query: "I need to set up private endpoints for my storage accounts"
+@cloud-networking I need to set up private endpoints for my storage accounts — who should handle this?
 ```
 
 ## Repository Structure
@@ -543,7 +572,7 @@ cloud-networking/
 │   └── cli.mjs                            # CLI installer (init, uninstall, status)
 └── extensions/
     └── cloud-networking/
-        ├── extension.mjs                  # Router: cn_capabilities, cn_route, auto-routing hook
+        ├── extension.mjs                  # Router: @cloud-networking mention trigger + auto-routing hook
         └── specialists/
             ├── vnet-architect/
             │   ├── agents/
@@ -850,7 +879,7 @@ specialist-name/
 |---------|-----|
 | Extensions not loading (`/env` shows "Extensions: none") | Enable experimental mode: `copilot --experimental` — or use project-level install: `cloud-networking init --project` |
 | Tools not appearing after install | Restart Copilot CLI to reload extensions |
-| `cn_capabilities` not found | Verify `~/.copilot/extensions/cloud-networking/extension.mjs` exists |
+| `@cloud-networking` doesn't engage | Verify `~/.copilot/extensions/cloud-networking/extension.mjs` exists; run `cloud-networking status` |
 | Specialist tools missing | Run `cloud-networking status` to check — should list all 19 specialists |
 | Conflicting individual extensions | Run `cloud-networking init` — it removes old standalone specialist installs |
 | `npx` hangs or fails | Use Option E (manual install) — clone the repo and copy files directly |
@@ -859,4 +888,8 @@ specialist-name/
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a full list of releases, new specialists, skill additions, and behavior changes.
