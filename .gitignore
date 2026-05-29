@@ -10,3 +10,7 @@ out/
 
 # Finance Desk extension (installed per-developer)
 .github/extensions/finance-desk/
+
+# Python bytecode
+__pycache__/
+*.pyc
