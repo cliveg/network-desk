@@ -48,7 +48,7 @@ The coordinator picks the right specialist automatically and responds in plain l
 
 Network Desk gives you a coordinated team of network specialist agents through [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). Describe what you need — VNet design, firewall rules, DNS troubleshooting, hybrid connectivity, IaC generation, container networking, SASE architecture — and the coordinator routes your request to the right specialist automatically.
 
-Each specialist runs with its own domain expertise, guardrails, and workflow. The coordinator handles routing and multi-domain orchestration so you don't have to remember which tools to call.
+Each specialist operates within a defined area of domain expertise, supported by tailored guardrails and structured workflows. The coordinator is responsible for routing requests and orchestrating cross-domain interactions, eliminating the need for users to manage or select individual tools.
 
 > **Analysis only** — Network Desk produces designs, configurations, IaC templates, and analysis for human review. It generates deployment code but does not execute deployments, modify live firewalls, or make changes to production networks.
 
