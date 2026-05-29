@@ -11,7 +11,8 @@
     "extensions/network-desk/",
     "LICENSE",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "PRIVACY.md"
   ],
   "keywords": [
     "copilot",

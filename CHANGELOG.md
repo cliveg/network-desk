@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Privacy documentation** — added [`PRIVACY.md`](PRIVACY.md) describing exactly how the
+  extension handles data: it collects no telemetry, transmits no prompts/code/files, and makes
+  only a single optional once-per-24h GitHub version check (disable with
+  `NETWORK_DESK_NO_UPDATE_CHECK=1`). Referenced from the README and shipped with the package.
+
+---
+
 ## [2.0.0] - 2026-05-28
 
 ### Changed — ⚠️ BREAKING: renamed the extension to **Network Desk**

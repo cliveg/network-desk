@@ -21,6 +21,7 @@
 | 📁 | [Output files](#output-files) | Where generated diagrams, reports, and configs are saved |
 | 📂 | [Repository Structure](#repository-structure) | Full folder tree and conventions |
 | 🔧 | [Troubleshooting](#troubleshooting) | Common issues and fixes |
+| 🔒 | [Privacy](#privacy) | How the extension handles your data |
 | 📜 | [Changelog](CHANGELOG.md) | Release notes and version history |
 | 📄 | [License](#license) | MIT |
 
@@ -282,7 +283,7 @@ The `network-desk` CLI manages installation of the Copilot extensions. You can r
 | `network-desk --version` | Print the installed CLI version |
 | `network-desk help` | Show CLI help |
 
-The extension also performs an **automatic update check** against GitHub once every 24 hours when a Copilot session starts, and prints a one-line notice if a newer version is available. Set `NETWORK_DESK_NO_UPDATE_CHECK=1` to disable.
+The extension also performs an **automatic update check** against GitHub once every 24 hours when a Copilot session starts, and prints a one-line notice if a newer version is available. Set `NETWORK_DESK_NO_UPDATE_CHECK=1` to disable. This is the extension's only outbound network request — see [Privacy](#privacy) / [PRIVACY.md](PRIVACY.md).
 
 ## How It Works
 
@@ -942,6 +943,16 @@ specialist-name/
 | `npx` hangs or fails | Use Option E (manual install) — clone the repo and copy files directly |
 | Firewall config for unsupported vendor | Check the [14 supported vendors](#firewall-vendors-14) list |
 | Version mismatch after update | Run `network-desk status` — compare CLI version vs installed version |
+
+## Privacy
+
+Network Desk is a **local, read-only** extension. It collects **no telemetry** and never
+transmits your prompts, code, or generated files. Its only outbound request is an optional
+once-per-24-hours version check against GitHub, which you can disable with
+`NETWORK_DESK_NO_UPDATE_CHECK=1`.
+
+See [PRIVACY.md](PRIVACY.md) for full details on what data is accessed, what leaves your
+machine, the local files written, and your controls.
 
 ## License
 
