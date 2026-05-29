@@ -8,9 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed — Exceeded the 128-tool API limit (extension failed to load)
+
+The extension registered ~162 tools (per-specialist `*_role`, `*_orchestrate`, and ~121 `*_skill_*` tools). The Copilot CLI/model enforces a hard **128-tool limit**, so every request was rejected with *"Request failed due to a transient API error. Retrying..."* and the extension was unusable.
+
+Tools are now **parameterized** instead of registered per specialist — **5 tools total**, well under the limit:
+
+- `cn_capabilities` — full specialist/skill map
+- `cn_route({ query })` — recommends the specialist(s) and the exact calls to make
+- `cn_role({ specialist })` — loads the specialist role definition
+- `cn_orchestrate({ specialist })` — returns the workflow + skill catalog
+- `cn_skill({ specialist, skill })` — loads a specific skill's deep guidance
+
+Other changes:
+
+- Introduced a single `REGISTRY` object (prefix → `{ dir, domain, trigger, guidance, skills }`) as the source of truth; routing, capabilities, orchestration prompts, and skill loading are all generated from it.
+- `cn_skill` tolerates legacy names (e.g. `vnet_skill_address_planner`) and underscores as the `skill` argument, normalizing them to kebab-case.
+- Hook/orchestrator guidance now points only at the 5 parameterized tools and explicitly notes that legacy `*_role`/`*_skill_*` names are references, not callable tools.
+- Added startup registry validation (verifies every role/skill `.md` exists, regexes compile, prefixes are unique) that logs issues without crashing.
+
+No specialist or skill was removed — all 19 specialists and 119 skills remain available through the parameterized tools.
+
 ### Added — Tier 1 specialist coverage (10 new skills)
 
-Implements the highest-priority "clear coverage gaps" identified in the specialist-improvement audit. Tool count: 146 → **156**. All skills follow the standard template (purpose · decision tree · per-vendor reference · workflow · verification checklist · references) and end with the analysis-only guardrail.
+Implements the highest-priority "clear coverage gaps" identified in the specialist-improvement audit. All skills follow the standard template (purpose · decision tree · per-vendor reference · workflow · verification checklist · references) and end with the analysis-only guardrail.
 
 | Specialist | New skill | Scope |
 |---|---|---|
