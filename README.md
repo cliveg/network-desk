@@ -57,7 +57,7 @@ Each specialist operates within a defined area of domain expertise, supported by
 
 | | Specialist | `specialist` | What They Do |
 |---|-----------|--------|-------------|
-| 🏗️ | **VNet/Subnet Architect** | `cn_vnet` | VNet/VPC design, hub-spoke, peering, address planning, Mermaid diagrams |
+| 🏗️ | **VNet/Subnet Architect** | `cn_vnet` | VNet/VPC design, hub-spoke, peering, address planning, ASCII/Mermaid/Excalidraw/draw.io diagrams |
 | 🔥 | **Firewall Engineer** | `cn_fw` | Multi-vendor firewall rules, policies, migration, config gen (14 vendors) |
 | ⚖️ | **Load Balancer** | `cn_lb` | LB selection, health probes, SSL offload, WAF, traffic routing |
 | 🌐 | **DNS Specialist** | `cn_dns` | DNS zones, resolvers, record audits, migration, troubleshooting |
@@ -213,6 +213,42 @@ ls ~/.copilot/extensions/network-desk/
 
 </details>
 
+### Option F — Install as a native Copilot CLI plugin
+
+Network Desk can also be installed as a **native Copilot CLI plugin** (the `copilot plugin` system) instead of an SDK extension. The plugin ships **one coordinator agent** (`Network Desk`) that routes to **20 specialist skills** — generated from the same single source of truth as the extension, so you get the same specialist depth.
+
+**Easiest — via the CLI helper** (registers a local marketplace, then installs):
+
+```bash
+npx github:dmauser/network-desk init --plugin
+# or, if installed globally:
+network-desk init --plugin
+```
+
+**Manually with the `copilot` CLI:**
+
+```bash
+# Register the repo as a marketplace, then install by name (recommended)
+copilot plugin marketplace add dmauser/network-desk
+copilot plugin install network-desk@network-desk
+
+# Verify
+copilot plugin list
+```
+
+Remove it with `network-desk uninstall --plugin` (or `copilot plugin uninstall network-desk`).
+
+**Extension vs. plugin — which should I use?**
+
+| | Extension (`init`) | Plugin (`init --plugin`) |
+|---|---|---|
+| Install target | `~/.copilot/extensions/` or `.github/extensions/` | `copilot plugin` store |
+| Routing | Deterministic regex hooks + `cn_*` tools | LLM-driven via the coordinator agent |
+| Experimental mode | Required for user-level | Not required |
+| Specialist depth | Full | Full (deep docs bundled as skill `reference/`) |
+
+Both are generated from the same registry. The plugin bundle lives in [`plugins/network-desk/`](plugins/network-desk/); regenerate it after registry changes with `network-desk plugin build`.
+
 ### Verify installation
 
 After any install method, check that everything is in place:
@@ -277,9 +313,12 @@ The `network-desk` CLI manages installation of the Copilot extensions. You can r
 |---------|-------------|
 | `network-desk init` | Install/reinstall extensions to `~/.copilot/extensions/` |
 | `network-desk init --project` | Install extensions to `.github/extensions/` in current repo |
+| `network-desk init --plugin` | Install as a native Copilot CLI plugin (registers a local marketplace, then installs) |
+| `network-desk plugin build` | (Re)generate the plugin bundle in `plugins/network-desk/` from the registry source |
 | `network-desk update` | Re-install over any existing user-level and/or project-level install (pulls latest from GitHub) |
 | `network-desk status` | Check installation status, version, and list available specialists |
 | `network-desk uninstall` | Remove installed extensions |
+| `network-desk uninstall --plugin` | Remove the installed Copilot CLI plugin |
 | `network-desk --version` | Print the installed CLI version |
 | `network-desk help` | Show CLI help |
 
@@ -587,7 +626,7 @@ Specialists are **analysis-first** and return their findings inline in the chat.
 ```
 network-desk/
 └── <specialist>/            # kebab dir name, e.g. firewall-engineer, capacity-planner
-    ├── diagrams/            # Mermaid / Excalidraw / draw.io sources
+    ├── diagrams/            # ASCII (.txt) / Mermaid / Excalidraw / draw.io sources
     ├── reports/             # Markdown / HTML / PDF / DOCX deliverables
     └── configs/             # generated configs / IaC / specs
 ```
