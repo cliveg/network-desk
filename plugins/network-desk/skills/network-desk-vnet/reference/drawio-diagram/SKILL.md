@@ -1,6 +1,6 @@
 # Skill: draw.io Network Diagram Generation (alternative format)
 
-> **Mermaid is the primary diagram format for this specialist** (see `vnet_skill_network_diagram`). Use draw.io only when the user explicitly asks for it — typically when they want polished, presentation-ready architecture diagrams with native cloud-provider stencils for export to PNG/SVG/PDF.
+> **Text/ASCII is the console default for this specialist** (see `vnet_skill_ascii_diagram`); Mermaid (`vnet_skill_network_diagram`) is the inline-rendering rich format. Use draw.io only when the user explicitly asks for it — typically when they want polished, presentation-ready architecture diagrams with native cloud-provider stencils for export to PNG/SVG/PDF.
 
 ## Purpose
 

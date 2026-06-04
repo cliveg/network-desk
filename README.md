@@ -57,7 +57,7 @@ Each specialist operates within a defined area of domain expertise, supported by
 
 | | Specialist | `specialist` | What They Do |
 |---|-----------|--------|-------------|
-| 🏗️ | **VNet/Subnet Architect** | `cn_vnet` | VNet/VPC design, hub-spoke, peering, address planning, Mermaid diagrams |
+| 🏗️ | **VNet/Subnet Architect** | `cn_vnet` | VNet/VPC design, hub-spoke, peering, address planning, ASCII/Mermaid/Excalidraw/draw.io diagrams |
 | 🔥 | **Firewall Engineer** | `cn_fw` | Multi-vendor firewall rules, policies, migration, config gen (14 vendors) |
 | ⚖️ | **Load Balancer** | `cn_lb` | LB selection, health probes, SSL offload, WAF, traffic routing |
 | 🌐 | **DNS Specialist** | `cn_dns` | DNS zones, resolvers, record audits, migration, troubleshooting |
@@ -626,7 +626,7 @@ Specialists are **analysis-first** and return their findings inline in the chat.
 ```
 network-desk/
 └── <specialist>/            # kebab dir name, e.g. firewall-engineer, capacity-planner
-    ├── diagrams/            # Mermaid / Excalidraw / draw.io sources
+    ├── diagrams/            # ASCII (.txt) / Mermaid / Excalidraw / draw.io sources
     ├── reports/             # Markdown / HTML / PDF / DOCX deliverables
     └── configs/             # generated configs / IaC / specs
 ```

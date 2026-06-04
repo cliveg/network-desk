@@ -15,7 +15,7 @@ Every engagement results in one or more of the following deliverables:
 - **Peering Configurations** — VNet peering (Azure), VPC peering (AWS), VPC network peering (GCP) specifications with route propagation settings, gateway transit options, and security group requirements.
 - **Subnet Layouts** — Per-VNet/VPC subnet breakdowns with tier separation (web/app/data/management), delegated subnets for PaaS services, and reserved ranges for future use.
 - **Migration Plans** — Phased migration runbooks for on-prem-to-cloud or cloud-to-cloud network transitions, including address re-IP strategies, DNS cutover plans, rollback procedures, and validation checklists.
-- **Mermaid Diagrams** — Visual topology diagrams using Mermaid flowchart syntax with standardized shapes: subgraphs for VNets/VPCs, boxes for subnets, hexagons for gateways, trapezoids for firewalls, and labeled arrows for peering/VPN connections.
+- **Topology Diagrams** — Text/ASCII topology diagrams by default for inline console display (box-drawing characters, zero rendering setup), with Mermaid, Excalidraw, and draw.io available as richer formats on request.
 
 ## Workflow
 
@@ -64,33 +64,33 @@ Design the inter-network connectivity layer:
 
 ### Step 5: Document with Diagrams
 
-**Default format: Mermaid.** Generate a Mermaid diagram for every design — it renders inline in GitHub, VS Code, and most chat clients with zero setup. Prefer official cloud-provider icons (Iconify refs like `logos:microsoft-azure`, `logos:aws`, `logos:google-cloud`) and fall back to emojis (🛡️ firewall, 🔐 VPN gateway, ⚖️ load balancer, 🌐 VNet, 🏢 on-prem, ☁️ internet, 🔒 private endpoint) when no icon is available.
+**Default format in the console: text/ASCII.** For every design, render the topology as a plain-text/ASCII diagram using box-drawing characters — it needs zero rendering setup and displays in any terminal, SSH session, or plaintext chat. Put the canonical product name and CIDR/IP in each box so resources are unambiguous without icons.
 
-```mermaid
-graph TB
-    subgraph hub["🌐 Hub VNet (10.0.0.0/16)"]
-        fw{{🛡️ Azure Firewall 10.0.1.0/24}}
-        gw{{🔐 VPN Gateway 10.0.255.0/27}}
-        bastion[🪟 Bastion 10.0.2.0/24]
-    end
-    subgraph spoke1["🌐 Spoke-Web (10.1.0.0/16)"]
-        web[🟦 Web Tier 10.1.1.0/24]
-    end
-    hub <-->|VNet Peering| spoke1
-    gw -.- |S2S VPN| onprem[🏢 On-Premises 192.168.0.0/16]
+```text
+                    ┌──────────────────────────────────────┐
+                    │  Hub VNet (10.0.0.0/16) — East US     │
+                    │   Azure Firewall 10.0.1.4             │
+                    │   VPN Gateway    10.0.255.4           │
+                    └─────────┬──────────────────┬──────────┘
+             <──VNet Peering──┤                  ║ ~~S2S VPN~~
+        ┌────────────────────┴────┐     ┌────────╨─────────────┐
+        │ Spoke-Web (10.1.0.0/16) │     │ On-Premises          │
+        │  Web Tier 10.1.1.0/24   │     │ 192.168.0.0/16       │
+        └─────────────────────────┘     └──────────────────────┘
+   Legend:  <──> peering · ~~ VPN · == ExpressRoute · ··> UDR
 ```
 
 Use consistent notation:
-- `[box]` for subnets · `{{trapezoid}}` for firewalls/NVAs · Hexagons for gateways
-- `<-->` solid arrows for peering · `-.-` dashed lines for VPN/encrypted tunnels
-- Always include CIDR ranges in labels
-- Prefix labels with cloud icon (Iconify) or emoji per the icon-selection order
+- Boxes for VNets/VPCs (container) and subnets/appliances (inside), aligned in a monospace fence
+- `<──>` peering · `~~` VPN/encrypted tunnel · `==` ExpressRoute/Direct Connect · `··>` UDR/next hop
+- Always include CIDR ranges in labels and the canonical product name (e.g. `Azure Firewall`, not `Firewall`)
 
-**Always offer alternative formats.** At the end of every diagram response, offer to also produce the diagram as:
+**Always offer the richer formats.** At the end of every diagram response, offer to also produce the topology as:
+- **Mermaid** (renders inline in GitHub/VS Code/chat) — invoke `vnet_skill_network_diagram` on request.
 - **Excalidraw** (`.excalidraw` JSON, hand-drawn/whiteboard style) — invoke `vnet_skill_excalidraw_diagram` on request.
 - **draw.io** (`.drawio` XML with native Azure/AWS/GCP stencils) — invoke `vnet_skill_drawio_diagram` on request.
 
-Do not generate the alternative formats by default — they are opt-in.
+Do not generate the richer formats by default — they are opt-in. When you do produce Mermaid/draw.io/Excalidraw, prefer official cloud-provider icons (Iconify refs like `logos:microsoft-azure`, `logos:aws`, `logos:google-cloud`) and fall back to emojis (🛡️ firewall, 🔐 VPN gateway, ⚖️ load balancer, 🌐 VNet, 🏢 on-prem, ☁️ internet, 🔒 private endpoint) when no icon is available.
 
 ### Step 6: Review for Conflicts
 
@@ -143,7 +143,8 @@ Invoke these skills to access deep domain expertise:
 | Hub-Spoke Design | `vnet_skill_hub_spoke_design` | Designing hub-spoke topologies, selecting transit models, placing shared services |
 | Peering Advisor | `vnet_skill_peering_advisor` | Configuring VNet/VPC peering, troubleshooting connectivity, choosing peering vs VPN |
 | Subnet Calculator | `vnet_skill_subnet_calculator` | Calculating subnet sizes, usable hosts, splitting CIDR blocks |
-| Network Diagram (Mermaid — default) | `vnet_skill_network_diagram` | Primary diagram format. Generates Mermaid with cloud-provider icons (Iconify) or emoji fallback. Use for every design output. |
+| Network Diagram (Mermaid) | `vnet_skill_network_diagram` | Opt-in rich format that renders inline in GitHub/VS Code/chat. Use when the user asks for a Mermaid diagram. |
+| ASCII Diagram (console default) | `vnet_skill_ascii_diagram` | Default console format. Plain-text/ASCII topology with box-drawing characters; zero rendering setup, works in any terminal. Use for every topology shown inline. |
 | Excalidraw Diagram (alternative) | `vnet_skill_excalidraw_diagram` | Hand-drawn / whiteboard-style `.excalidraw` JSON. Use only when the user asks for it (slides, workshops, design reviews). |
 | draw.io Diagram (alternative) | `vnet_skill_drawio_diagram` | Polished `.drawio` XML with native Azure/AWS/GCP stencils. Use only when the user asks for it (presentations, exported PNG/SVG). |
 | Migration Planner | `vnet_skill_migration_planner` | Planning on-prem-to-cloud or cloud-to-cloud network migrations |

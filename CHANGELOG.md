@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Text/ASCII topology diagrams are now the console default (vnet-architect).** New
+  `vnet_skill_ascii_diagram` skill renders network topologies as plain-text/ASCII using
+  box-drawing characters — zero rendering setup, works in any terminal, SSH session, or
+  plaintext chat. It is the default format for topologies shown inline in the console, with
+  templates for hub-spoke, multi-region, and AWS Transit Gateway layouts.
+  - **Mermaid, Excalidraw, and draw.io are now opt-in richer formats** offered after the ASCII
+    diagram (previously Mermaid was the default). The vnet-architect `guidance`, role definition
+    (Step 5), `network-diagram`/`drawio-diagram`/`excalidraw-diagram` skill headers, and the
+    registry `summary` were updated accordingly. Regenerate via `network-desk plugin build`.
+
 - **Native Copilot CLI plugin (second install option).** Network Desk can now be installed as a
   native `copilot plugin` in addition to the SDK extension. The plugin ships **one coordinator
   agent** (`Network Desk`) that routes to **20 specialist skills**, with each specialist's deep

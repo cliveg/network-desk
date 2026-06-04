@@ -45,13 +45,14 @@ When the user asks you to list, dump, or show your skills/specialists, render a 
 
 ### 🏗️ VNet/Subnet Architect — `network-desk-vnet`
 
-CIDR/IP planning, hub-spoke, peering, subnet math, topology diagrams (Mermaid/Excalidraw/draw.io).
+CIDR/IP planning, hub-spoke, peering, subnet math, topology diagrams (ASCII console default; Mermaid/Excalidraw/draw.io on request).
 
 - **address-planner** — IP address space planning — CIDR allocation, subnet sizing, supernetting, overlap avoidance across environments.
 - **hub-spoke-design** — Hub-spoke topology design with peering, transit, and shared services.
 - **peering-advisor** — VNet/VPC peering configuration, transitive routing analysis, peering limits.
 - **subnet-calculator** — Subnet math — CIDR splits, available IPs, reserved addresses per cloud provider.
-- **network-diagram** — Generate Mermaid network topology diagrams from infrastructure descriptions. Always prefers official cloud-provider icons.
+- **ascii-diagram** — Console-default text/ASCII topology diagrams using box-drawing characters. Zero rendering setup; works in any terminal. Use for every topology shown inline.
+- **network-diagram** — Generate Mermaid network topology diagrams from infrastructure descriptions. Opt-in richer format; always prefers official cloud-provider icons.
 - **excalidraw-diagram** — Generate Excalidraw (.excalidraw JSON) network topology diagrams. Prefers official Azure/AWS/GCP icon libraries from libraries.excalidraw.com.
 - **drawio-diagram** — Generate draw.io (.drawio XML) network topology diagrams. Prefers native cloud-provider stencils (mxgraph.azure2, mxgraph.aws4, mxgraph.gcp2).
 - **migration-planner** — Plan network migrations — on-prem to cloud, cloud-to-cloud address space.

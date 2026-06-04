@@ -14,7 +14,7 @@ When the user asks what Network Desk can do, its capabilities, or for examples, 
 
 | Specialist | Domain | What it does |
 | --- | --- | --- |
-| 🏗️ VNet/Subnet Architect | VNet/Subnet Architecture | CIDR/IP planning, hub-spoke, peering, subnet math, topology diagrams (Mermaid/Excalidraw/draw.io) |
+| 🏗️ VNet/Subnet Architect | VNet/Subnet Architecture | CIDR/IP planning, hub-spoke, peering, subnet math, topology diagrams (ASCII console default; Mermaid/Excalidraw/draw.io on request) |
 | 🔥 Firewall Engineer | Firewall Engineering | Rule audits, policy design/test, vendor migration, config gen, HA, log analysis (14 vendors) |
 | ⚖️ Load Balancer | Load Balancing | L4/L7 selection, health probes, TLS offload/certs, WAF rules, routing, troubleshooting |
 | 🌐 DNS Specialist | DNS | Zone/resolver design, DNSSEC, record audits, migrations, resolution debugging |

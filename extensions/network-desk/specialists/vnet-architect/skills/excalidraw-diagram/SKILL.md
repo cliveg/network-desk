@@ -1,6 +1,6 @@
 # Skill: Excalidraw Network Diagram Generation (alternative format)
 
-> **Mermaid is the primary diagram format for this specialist** (see `vnet_skill_network_diagram`). Use Excalidraw only when the user explicitly asks for it — typically for hand-drawn / whiteboard-style architecture diagrams for slides, workshops, or design reviews.
+> **Text/ASCII is the console default for this specialist** (see `vnet_skill_ascii_diagram`); Mermaid (`vnet_skill_network_diagram`) is the inline-rendering rich format. Use Excalidraw only when the user explicitly asks for it — typically for hand-drawn / whiteboard-style architecture diagrams for slides, workshops, or design reviews.
 
 ## Purpose
 

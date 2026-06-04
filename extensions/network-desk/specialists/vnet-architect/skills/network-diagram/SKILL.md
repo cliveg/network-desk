@@ -1,8 +1,8 @@
-# Skill: Network Diagram Generation (Mermaid — primary format)
+# Skill: Network Diagram Generation (Mermaid — opt-in rich format)
 
 ## Purpose
 
-**Mermaid is the default diagram format for this specialist.** It renders inline in GitHub READMEs, GitHub Issues/PRs, VS Code preview, and most chat clients with zero setup — making it the right first choice for every design output.
+> **Text/ASCII is the console default for this specialist** (see `vnet_skill_ascii_diagram`). Mermaid is one of three opt-in *richer* formats (alongside Excalidraw and draw.io) — produce it when the user wants a graphical diagram that renders inline in GitHub READMEs, GitHub Issues/PRs, VS Code preview, and most chat clients with zero setup.
 
 This skill generates Mermaid flowchart and `architecture-beta` diagrams from network topology descriptions. It defines standard node shapes, labeling conventions, and reusable templates for common cloud network architectures.
 
@@ -44,15 +44,16 @@ When the diagram contains cloud resources, **always** reference the official clo
 
 Generic shapes (rectangle, ellipse, hexagon) remain appropriate for non-cloud abstractions: internet cloud, users, on-prem datacenter outline, or annotations.
 
-## 🔁 Always offer alternative formats
+## 🔁 Always offer the other formats
 
 At the end of every diagram response, append a short offer like:
 
 > *Want this diagram in another format? I can also generate it as:*
+> - *Text/ASCII* (console default — works in any terminal) — say "give me the ASCII version" and I'll call `vnet_skill_ascii_diagram`.
 > - *Excalidraw* (`.excalidraw` JSON — hand-drawn / whiteboard style) — say "give me the Excalidraw version" and I'll call `vnet_skill_excalidraw_diagram`.
 > - *draw.io* (`.drawio` XML with native Azure/AWS/GCP stencils) — say "give me the draw.io version" and I'll call `vnet_skill_drawio_diagram`.
 
-Do **not** generate the alternative formats by default — they're opt-in to keep the primary response focused.
+Do **not** generate the other formats by default — they're opt-in to keep the response focused.
 
 ## Core Knowledge
 
