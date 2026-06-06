@@ -201,7 +201,7 @@ function buildCoordinatorAgent() {
         "- End every response with the guardrail below."
     );
     lines.push("");
-    lines.push("## Validation policy (Microsoft Learn MCP — Azure source of truth)");
+    lines.push("## Validation policy (per-cloud docs MCP — source of truth)");
     lines.push("");
     lines.push(MCP_VALIDATION_NOTE);
     lines.push("");
@@ -312,7 +312,7 @@ function buildSpecialistSkill(prefix) {
         lines.push(s.guidance);
         lines.push("");
     }
-    lines.push("## Validation policy (Microsoft Learn MCP — Azure source of truth)");
+    lines.push("## Validation policy (per-cloud docs MCP — source of truth)");
     lines.push("");
     lines.push(MCP_VALIDATION_NOTE);
     lines.push("");

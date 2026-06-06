@@ -18,9 +18,9 @@ Egress/VPN/circuit/LB/firewall pricing, cross-cloud cost compare & optimization.
 
 Covers Azure, AWS, and GCP networking costs. MANDATORY: every numeric price MUST be fetched from a live pricing API before it is quoted — never a hard-coded, cached, or model-recalled rate. Azure prices via the `retail-prices-api` skill (echo the $filter, region, SKU/meter, retailPrice, effectiveStartDate, currency, and retrieval timestamp); AWS prices via the AWS Price List Query API (GetProducts); GCP prices via the Cloud Billing Catalog API (services/.../skus) — each echoing the equivalent query, region/SKU, unit price, currency, and retrieval timestamp. Only fall back to values explicitly flagged 'INDICATIVE — not fetched from a live pricing API' when a provider's API is unreachable.
 
-## Validation policy (Microsoft Learn MCP — Azure source of truth)
+## Validation policy (per-cloud docs MCP — source of truth)
 
-Validation-first: validate every Azure fact against the Microsoft Learn MCP server before stating it (Learn wins on conflict; cite the Learn URL). If no Learn MCP server is configured, label Azure answers ⚠️ unverified and suggest `copilot mcp add --transport http microsoft-learn https://learn.microsoft.com/api/mcp`. AWS/GCP/firewall facts: verify against official vendor docs.
+Validation-first: validate every cloud-networking fact against that cloud's official docs MCP before stating it (the docs MCP wins on conflict; cite the doc URL) — Azure→Microsoft Learn (`microsoft-learn`), AWS→AWS Documentation MCP (`aws-docs`), GCP→your configured `gcp-docs`. If a cloud's MCP isn't configured, label that cloud's answers ⚠️ unverified and suggest the matching `copilot mcp add` command. Firewall-vendor facts: verify against official vendor docs.
 
 ## Persona & workflow
 

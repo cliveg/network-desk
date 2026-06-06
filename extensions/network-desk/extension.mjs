@@ -100,7 +100,7 @@ async function loadFile(path) {
     }
 }
 
-// Prepend the Microsoft Learn MCP validation policy to loaded specialist content
+// Prepend the per-cloud docs-MCP validation policy to loaded specialist content
 // (role/skill markdown) so the directive travels with every engaged specialist.
 // Non-string content (load failures) passes through untouched.
 function withPolicy(content) {

@@ -358,45 +358,119 @@ export const REGISTRY = {
     },
 };
 
-// ── Microsoft Learn MCP validation policy (shared, dependency-free) ───────────
+// ── Per-cloud docs-MCP validation policy (shared, dependency-free) ───────────
 //
-// network-desk treats the Microsoft Learn MCP server as the primary source of
-// truth for AZURE facts. These constants are exported so both the runtime
-// extension (extension.mjs) and the plugin generator (scripts/build-plugin.mjs)
-// surface identical wording. Learn only covers Azure/Microsoft docs, so the
-// "Learn wins" rule is scoped to Azure; AWS, GCP, and firewall-vendor facts keep
-// the existing "verify against vendor documentation" guardrail.
+// network-desk treats an official documentation MCP server as the primary source
+// of truth for EACH cloud's facts:
+//   • Azure → Microsoft Learn MCP (hosted HTTP, anonymous)
+//   • AWS   → AWS Documentation MCP (local stdio via uvx; awslabs)
+//   • GCP   → a configurable docs MCP (placeholder — swap when standardized)
+// Firewall-vendor facts have no docs MCP and keep the "verify against vendor
+// documentation" guardrail.
+//
+// MCP_PROVIDERS is the single source of truth for the wording below; both the
+// runtime extension (extension.mjs) and the plugin generator
+// (scripts/build-plugin.mjs) consume the derived MCP_VALIDATION_DIRECTIVE /
+// MCP_VALIDATION_NOTE so every surface stays identical.
 
-export const MCP_FALLBACK_BANNER =
-    "> ⚠️ **Unverified — Microsoft Learn MCP server not configured.**\n" +
-    "> This Azure content is based on built-in/model knowledge and was NOT validated against\n" +
-    "> Microsoft Learn. Specs, limits, SKUs, and availability may be outdated. Configure the Learn\n" +
-    "> MCP server for authoritative Azure validation:\n" +
-    "> `copilot mcp add --transport http microsoft-learn https://learn.microsoft.com/api/mcp`";
+export const MCP_PROVIDERS = {
+    azure: {
+        cloud: "Azure",
+        label: "Microsoft Learn MCP",
+        serverName: "microsoft-learn",
+        transport: "http",
+        docDomain: "learn.microsoft.com",
+        toolHints: "`microsoft_docs_search`, `microsoft_docs_fetch`, `microsoft_code_sample_search`",
+        addCommand:
+            "copilot mcp add --transport http microsoft-learn https://learn.microsoft.com/api/mcp",
+        prereq: "",
+    },
+    aws: {
+        cloud: "AWS",
+        label: "AWS Documentation MCP",
+        serverName: "aws-docs",
+        transport: "stdio",
+        docDomain: "docs.aws.amazon.com",
+        toolHints: "`search_documentation`, `read_documentation`, `recommend`",
+        addCommand:
+            "copilot mcp add aws-docs --env FASTMCP_LOG_LEVEL=ERROR --env AWS_DOCUMENTATION_PARTITION=aws -- uvx awslabs.aws-documentation-mcp-server@latest",
+        prereq: "requires `uv`/`uvx` + Python ≥3.10 (https://docs.astral.sh/uv/)",
+    },
+    gcp: {
+        cloud: "GCP",
+        label: "GCP Documentation MCP (configure)",
+        serverName: "gcp-docs",
+        transport: "stdio",
+        docDomain: "cloud.google.com/docs",
+        toolHints: "the configured GCP docs search/fetch tools",
+        addCommand: "copilot mcp add gcp-docs -- <your-gcp-docs-mcp-command>",
+        prereq: "placeholder — substitute your chosen GCP docs MCP server command",
+    },
+};
+
+// Per-provider ⚠️ fallback banner (shown when that cloud's docs MCP is absent).
+export function mcpFallbackBanner(key) {
+    const p = MCP_PROVIDERS[key];
+    const prereq = p.prereq ? ` (${p.prereq})` : "";
+    return (
+        `> ⚠️ **Unverified — ${p.label} server not configured.**\n` +
+        `> This ${p.cloud} content is based on built-in/model knowledge and was NOT validated\n` +
+        `> against ${p.docDomain}. Specs, limits, SKUs, and availability may be outdated. Configure\n` +
+        `> the ${p.cloud} docs MCP server for authoritative validation${prereq}:\n` +
+        "> `" + p.addCommand + "`"
+    );
+}
+
+// Back-compat alias: the original Azure-only banner export.
+export const MCP_FALLBACK_BANNER = mcpFallbackBanner("azure");
+
+const _providerOrder = ["azure", "aws", "gcp"];
+
+const _primaryLines = _providerOrder
+    .map((k) => {
+        const p = MCP_PROVIDERS[k];
+        return (
+            `   • ${p.cloud}: the ${p.label} server (tools like ${p.toolHints}). ` +
+            `Cite the exact ${p.docDomain} URL(s) you validated against.`
+        );
+    })
+    .join("\n");
+
+const _fallbackBanners = _providerOrder.map((k) => mcpFallbackBanner(k)).join("\n>\n");
+
+const _addCommands = _providerOrder
+    .map((k) => {
+        const p = MCP_PROVIDERS[k];
+        const prereq = p.prereq ? `  — ${p.prereq}` : "";
+        return `   • ${p.cloud}: \`${p.addCommand}\`${prereq}`;
+    })
+    .join("\n");
 
 export const MCP_VALIDATION_DIRECTIVE =
-    "VALIDATION POLICY (Microsoft Learn is the primary source of truth for AZURE):\n" +
-    "1. PRIMARY — Before stating ANY Azure networking fact (service SKUs/tiers, limits & quotas, " +
-    "regional availability, feature support, pricing dimensions, and API/CLI/Bicep/Terraform syntax " +
-    "& versions), you MUST validate it via the Microsoft Learn MCP server (tools named like " +
-    "`microsoft_docs_search`, `microsoft_docs_fetch`, `microsoft_code_sample_search`, or whatever the " +
-    "configured Learn MCP server exposes). Treat Learn as AUTHORITATIVE: if Learn contradicts internal " +
-    "specialist/skill content or your own knowledge, LEARN WINS — correct the answer and note the " +
-    "correction. Cite the exact Microsoft Learn URL(s) you validated against.\n" +
-    "2. FALLBACK — Only if no Learn MCP server is available (tool absent, not configured, or the call " +
-    "fails): answer from specialist/skill + model knowledge, but PREPEND this exact banner to your " +
-    "response and mark every numeric spec/limit \"indicative, unverified\":\n" +
-    MCP_FALLBACK_BANNER + "\n" +
-    "3. NEVER silently rely on model knowledge for Azure — the user must always be able to tell whether " +
-    "an Azure answer was Learn-validated (with URLs) or a fallback (with the ⚠️ banner).\n" +
-    "4. SCOPE — Microsoft Learn covers Azure/Microsoft only. For AWS, GCP, and firewall-vendor facts " +
-    "there is no Learn equivalent: validate against the official vendor documentation and keep the " +
+    "VALIDATION POLICY (each cloud's official docs MCP is the primary source of truth):\n" +
+    "1. PRIMARY — Before stating ANY cloud-networking fact (service SKUs/tiers, limits & quotas, " +
+    "regional availability, feature support, pricing dimensions, and API/CLI/IaC syntax & versions), " +
+    "you MUST validate it via THAT cloud's documentation MCP server:\n" +
+    _primaryLines + "\n" +
+    "   Treat the cloud's docs MCP as AUTHORITATIVE: if it contradicts internal specialist/skill " +
+    "content or your own knowledge, THE DOCS MCP WINS — correct the answer and note the correction.\n" +
+    "2. FALLBACK — Only if the relevant cloud's docs MCP is unavailable (tool absent, not configured, " +
+    "or the call fails): answer from specialist/skill + model knowledge, but PREPEND the matching " +
+    "banner below to your response and mark every numeric spec/limit \"indicative, unverified\". " +
+    "Configure the missing server with the matching `copilot mcp add` command:\n" +
+    _fallbackBanners + "\n" +
+    "   Install commands:\n" +
+    _addCommands + "\n" +
+    "3. NEVER silently rely on model knowledge for a cloud fact — the user must always be able to tell " +
+    "whether an answer was docs-MCP-validated (with URLs) or a fallback (with the ⚠️ banner).\n" +
+    "4. SCOPE — Each docs MCP covers its own cloud only. For firewall-vendor facts there is no docs " +
+    "MCP: validate against the official vendor documentation and keep the " +
     "\"Analysis only — verify against vendor documentation before applying.\" guardrail.";
 
 // Compact one-liner for space-constrained surfaces (presence note, plugin scope blurbs).
 export const MCP_VALIDATION_NOTE =
-    "Validation-first: validate every Azure fact against the Microsoft Learn MCP server before " +
-    "stating it (Learn wins on conflict; cite the Learn URL). If no Learn MCP server is configured, " +
-    "label Azure answers ⚠️ unverified and suggest " +
-    "`copilot mcp add --transport http microsoft-learn https://learn.microsoft.com/api/mcp`. " +
-    "AWS/GCP/firewall facts: verify against official vendor docs.";
+    "Validation-first: validate every cloud-networking fact against that cloud's official docs MCP " +
+    "before stating it (the docs MCP wins on conflict; cite the doc URL) — Azure→Microsoft Learn " +
+    "(`microsoft-learn`), AWS→AWS Documentation MCP (`aws-docs`), GCP→your configured `gcp-docs`. " +
+    "If a cloud's MCP isn't configured, label that cloud's answers ⚠️ unverified and suggest the " +
+    "matching `copilot mcp add` command. Firewall-vendor facts: verify against official vendor docs.";
